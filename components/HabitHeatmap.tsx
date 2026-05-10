@@ -6,18 +6,40 @@ type HeatmapProps = {
   logs: any[];
   year: number;
   month: number;
+  timezoneOffsetMinutes?: number;
 };
 
-export default function HabitHeatmap({ logs, year, month }: HeatmapProps) {
+export default function HabitHeatmap({ logs, year, month, timezoneOffsetMinutes }: HeatmapProps) {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const firstDayOfMonth = new Date(year, month, 1).getDay();
+
+  if (logs.length === 0) {
+    return (
+      <div className="rounded-xl border border-gray-200 bg-gray-50 p-6 text-center text-sm text-gray-500">
+        No habit logs this month yet.
+      </div>
+    );
+  }
+
+  /**
+   * Convert a UTC date to the user's local date key for comparison.
+   * Accounts for timezone offset.
+   */
+  const getLocalDateKey = (utcDate: Date | string): string => {
+    const date = new Date(utcDate);
+    const offsetMinutes = timezoneOffsetMinutes ?? -new Date().getTimezoneOffset();
+    const utcMs = date.getTime();
+    const localMs = utcMs + offsetMinutes * 60000;
+    const localDate = new Date(localMs);
+
+    return `${localDate.getFullYear()}-${localDate.getMonth()}-${localDate.getDate()}`;
+  };
 
   const completedDates = useMemo(() => {
     const set = new Set<string>();
     for (const log of logs) {
       if (log.completed) {
-        const d = new Date(log.date);
-        const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+        const key = getLocalDateKey(log.date);
         set.add(key);
       }
     }

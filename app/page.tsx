@@ -1,7 +1,10 @@
 import Link from 'next/link';
-import { Wallet, Plus, TrendingUp, HeartPulse } from 'lucide-react';
+import { Wallet, PlusCircle, TrendingUp, HeartPulse } from 'lucide-react';
 import { prisma } from '../lib/prisma';
 import ExpensesMiniChart from '../components/ExpensesMiniChart';
+import ChartErrorBoundary from '../components/ChartErrorBoundary';
+
+export const dynamic = 'force-dynamic';
 
 type LatestMetric = {
   type: string;
@@ -34,10 +37,16 @@ function formatCurrency(value: number, currency = 'USD') {
 }
 
 function formatMetricValue(metric: LatestMetric) {
-  return metric.unit ? `${metric.value.toFixed(1)} ${metric.unit}` : metric.value.toFixed(1);
+  try {
+    const value = typeof metric.value === 'number' ? metric.value : 0;
+    return metric.unit ? `${value.toFixed(1)} ${metric.unit}` : value.toFixed(1);
+  } catch {
+    return '--';
+  }
 }
 
 export default async function Page() {
+  // Fetch or create user (critical for dashboard to work)
   let user = await prisma.user.findFirst({
     include: {
       accounts: true
@@ -56,6 +65,11 @@ export default async function Page() {
     });
   }
 
+  // Ensure user object is valid
+  if (!user?.id) {
+    throw new Error('Failed to create or fetch user');
+  }
+
   const now = new Date();
   const todayStart = startOfDay(now);
   const tomorrowStart = new Date(todayStart);
@@ -63,12 +77,18 @@ export default async function Page() {
   const sevenDaysAgo = new Date(todayStart);
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
 
-  const [netWorth, todayExpenses, todayCompletedLogs, todayHabitLogs, habitsTotal, recentMetrics, expenseTransactions] =
+  // Fetch all dashboard data in parallel with proper error handling
+  const [netWorth, totalTransactionCount, todayExpenses, todayCompletedLogs, todayHabitLogs, habitsTotal, recentMetrics, expenseTransactions] =
     await Promise.all([
       prisma.account.aggregate({
         where: { userId: user.id },
         _sum: { balance: true }
-      }),
+      }).catch(() => ({ _sum: { balance: null } })),
+      prisma.transaction.count({
+        where: {
+          account: { userId: user.id }
+        }
+      }).catch(() => 0),
       prisma.transaction.aggregate({
         where: {
           account: { userId: user.id },
@@ -79,7 +99,7 @@ export default async function Page() {
           }
         },
         _sum: { amount: true }
-      }),
+      }).catch(() => ({ _sum: { amount: null } })),
       prisma.habitLog.count({
         where: {
           habit: { userId: user.id },
@@ -89,7 +109,7 @@ export default async function Page() {
             lt: tomorrowStart
           }
         }
-      }),
+      }).catch(() => 0),
       prisma.habitLog.count({
         where: {
           habit: { userId: user.id },
@@ -98,14 +118,14 @@ export default async function Page() {
             lt: tomorrowStart
           }
         }
-      }),
+      }).catch(() => 0),
       prisma.habit.count({
         where: { userId: user.id }
-      }),
+      }).catch(() => 0),
       prisma.healthMetric.findMany({
         where: { userId: user.id },
         orderBy: { date: 'desc' }
-      }),
+      }).catch(() => []),
       prisma.transaction.findMany({
         where: {
           account: { userId: user.id },
@@ -117,9 +137,11 @@ export default async function Page() {
         },
         orderBy: { date: 'asc' },
         select: { amount: true, date: true }
-      })
+      }).catch(() => [])
     ]);
 
+  // Build expense chart data safely
+  const safeExpenseTransactions = Array.isArray(expenseTransactions) ? expenseTransactions : [];
   const dailyExpenseMap = new Map<string, number>();
   for (let offset = 0; offset < 7; offset += 1) {
     const date = new Date(sevenDaysAgo);
@@ -127,9 +149,11 @@ export default async function Page() {
     dailyExpenseMap.set(localDateKey(date), 0);
   }
 
-  for (const transaction of expenseTransactions) {
-    const key = localDateKey(startOfDay(transaction.date));
-    dailyExpenseMap.set(key, (dailyExpenseMap.get(key) ?? 0) + transaction.amount);
+  for (const transaction of safeExpenseTransactions) {
+    if (transaction?.date) {
+      const key = localDateKey(startOfDay(transaction.date));
+      dailyExpenseMap.set(key, (dailyExpenseMap.get(key) ?? 0) + (transaction.amount ?? 0));
+    }
   }
 
   const expenseChartData = Array.from(dailyExpenseMap.entries()).map(([date, amount]) => ({
@@ -137,17 +161,23 @@ export default async function Page() {
     amount
   }));
 
+  // Build latest metrics map safely
+  const safeRecentMetrics = Array.isArray(recentMetrics) ? recentMetrics : [];
   const latestMetricsMap = new Map<string, LatestMetric>();
-  for (const metric of recentMetrics) {
-    if (!latestMetricsMap.has(metric.type)) {
+  for (const metric of safeRecentMetrics) {
+    if (metric?.type && !latestMetricsMap.has(metric.type)) {
       latestMetricsMap.set(metric.type, metric);
     }
   }
 
-  const netWorthValue = netWorth._sum.balance ?? 0;
-  const todayExpenseValue = todayExpenses._sum.amount ?? 0;
-  const habitCompletionRate = habitsTotal === 0 ? 0 : Math.round((todayCompletedLogs / habitsTotal) * 100);
-  const currency = user.accounts[0]?.currency ?? 'USD';
+  // Calculate dashboard values safely
+  const netWorthValue = netWorth?._sum?.balance ?? 0;
+  const todayExpenseValue = todayExpenses?._sum?.amount ?? 0;
+  const safeHabitsTotal = Math.max(0, habitsTotal ?? 0);
+  const safeTodayCompletedLogs = Math.max(0, todayCompletedLogs ?? 0);
+  const habitCompletionRate = safeHabitsTotal === 0 ? 0 : Math.round((safeTodayCompletedLogs / safeHabitsTotal) * 100);
+  const safeAccounts = Array.isArray(user?.accounts) ? user.accounts : [];
+  const currency = safeAccounts[0]?.currency ?? 'USD';
 
   const stats = [
     {
@@ -159,7 +189,7 @@ export default async function Page() {
     {
       label: "Today's expenses",
       value: formatCurrency(todayExpenseValue, currency),
-      icon: Plus,
+      icon: PlusCircle,
       accent: 'from-rose-500 to-orange-500'
     },
     {
@@ -182,11 +212,40 @@ export default async function Page() {
     { label: 'Log health', href: '/health', icon: HeartPulse }
   ];
 
+  if (safeAccounts.length === 0 && totalTransactionCount === 0 && safeHabitsTotal === 0 && safeRecentMetrics.length === 0) {
+    return (
+      <section className="space-y-6">
+        <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gray-50 text-gray-400">
+            <PlusCircle className="h-8 w-8" />
+          </div>
+          <h2 className="mt-5 text-2xl font-semibold text-gray-900">👋 Welcome to LifeOS! Start by adding an account, a habit, or a health metric.</h2>
+          <p className="mt-2 text-sm text-gray-500">Use the quick actions below to get your dashboard moving.</p>
+          <div className="mt-6 grid gap-3 md:grid-cols-3">
+            {quickLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-medium text-gray-800 transition hover:bg-gray-100"
+              >
+                <span className="flex items-center gap-3">
+                  <link.icon className="h-4 w-4 text-gray-500" />
+                  {link.label}
+                </span>
+                <PlusCircle className="h-4 w-4 text-gray-400" />
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="space-y-6">
       <div>
         <p className="text-sm uppercase tracking-[0.2em] text-gray-500">Dashboard</p>
-        <h2 className="mt-2 text-3xl font-semibold text-gray-900">Welcome back, {user.name}</h2>
+        <h2 className="mt-2 text-3xl font-semibold text-gray-900">Welcome back, {user?.name ?? 'User'}</h2>
         <p className="mt-2 text-gray-600">Here is your LifeOS summary for today.</p>
       </div>
 
@@ -210,12 +269,15 @@ export default async function Page() {
               <p className="text-sm text-gray-500">Grouped by day</p>
             </div>
           </div>
-          {expenseTransactions.length === 0 ? (
-            <div className="flex h-[180px] items-center justify-center rounded-xl border border-dashed border-gray-200 text-sm text-gray-500">
-              No transactions yet.
+          {safeExpenseTransactions.length === 0 ? (
+            <div className="flex h-[180px] flex-col items-center justify-center rounded-xl bg-gray-50 text-center text-sm text-gray-500">
+              <Wallet className="h-8 w-8 text-gray-300" />
+              <p className="mt-3">No transactions yet.</p>
             </div>
           ) : (
-            <ExpensesMiniChart data={expenseChartData} />
+            <ChartErrorBoundary>
+              <ExpensesMiniChart data={expenseChartData} />
+            </ChartErrorBoundary>
           )}
         </div>
 
@@ -246,19 +308,23 @@ export default async function Page() {
           <p className="mt-1 text-sm text-gray-500">Most recent entry for each metric type.</p>
           <div className="mt-4 space-y-3">
             {latestMetricsMap.size === 0 ? (
-              <div className="rounded-xl border border-dashed border-gray-200 px-4 py-6 text-sm text-gray-500">
-                No health metrics yet.
+              <div className="flex h-[180px] flex-col items-center justify-center rounded-xl bg-gray-50 text-center text-sm text-gray-500">
+                <HeartPulse className="h-8 w-8 text-gray-300" />
+                <p className="mt-3">No health metrics yet.</p>
               </div>
             ) : (
-              Array.from(latestMetricsMap.values()).map((metric) => (
-                <div key={metric.type} className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3">
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">{metric.type.replace('_', ' ').toLowerCase()}</p>
-                    <p className="text-xs text-gray-500">Updated {metric.date.toLocaleDateString()}</p>
+              Array.from(latestMetricsMap.values()).map((metric) => {
+                if (!metric?.type) return null;
+                return (
+                  <div key={metric.type} className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3">
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">{metric.type.replace('_', ' ').toLowerCase()}</p>
+                      <p className="text-xs text-gray-500">Updated {metric.date?.toLocaleDateString?.() ?? 'unknown'}</p>
+                    </div>
+                    <p className="text-sm font-semibold text-gray-900">{formatMetricValue(metric)}</p>
                   </div>
-                  <p className="text-sm font-semibold text-gray-900">{formatMetricValue(metric)}</p>
-                </div>
-              ))
+                );
+              }).filter(Boolean)
             )}
           </div>
         </div>

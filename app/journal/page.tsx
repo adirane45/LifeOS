@@ -1,7 +1,9 @@
 import { prisma } from '../../lib/prisma';
 import { getMoodEmoji, getEntriesOnThisDay } from '../../lib/journalHelpers';
 import { revalidatePath } from 'next/cache';
+import { BookOpen } from 'lucide-react';
 import JournalEntryItem from '../../components/JournalEntryItem';
+import EmptyState from '../../components/EmptyState';
 
 export const dynamic = 'force-dynamic';
 
@@ -60,7 +62,7 @@ export default async function JournalPage() {
         <div className="space-y-6">
           <div className="rounded-2xl border border-gray-200 bg-white p-4">
             <h3 className="text-lg font-medium">New entry</h3>
-            <form action={addEntry} className="mt-4 space-y-3">
+            <form id="new-entry" action={addEntry} className="mt-4 space-y-3">
               <div>
                 <label className="text-sm">Title</label>
                 <input name="title" placeholder="Entry title" className="mt-1 w-full rounded border px-3 py-2" />
@@ -87,9 +89,7 @@ export default async function JournalPage() {
             <h3 className="text-lg font-medium mb-4">All entries</h3>
             <div className="space-y-4">
               {entries.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-gray-200 px-4 py-6 text-sm text-gray-500">
-                  No entries yet. Start writing!
-                </div>
+                <EmptyState icon={<BookOpen />} title="No journal entries yet." description="Write your first note to start journaling." actionLabel="Write a note" actionHref="#new-entry" />
               ) : (
                 entries.map((entry: any) => (
                   <div key={entry.id} className="space-y-2">
@@ -109,20 +109,24 @@ export default async function JournalPage() {
         </div>
 
         <div className="rounded-2xl border border-gray-200 bg-white p-4 h-fit">
-          <h3 className="text-sm font-medium">On this day</h3>
+          <h3 className="text-sm font-medium">On This Day</h3>
           <p className="text-xs text-gray-500 mt-1">In previous years</p>
-          <ul className="mt-4 space-y-3">
+          <div className="mt-4">
             {onThisDayEntries.length === 0 ? (
-              <li className="text-xs text-gray-500">No entries from previous years.</li>
+              <div className="rounded-xl bg-gray-50 p-6 text-center text-sm text-gray-500">
+                📅 No entries from past years on this day. Write your first memory today!
+              </div>
             ) : (
-              onThisDayEntries.map((entry: any) => (
-                <li key={entry.id} className="border-l-2 border-gray-300 px-3 py-2">
-                  <div className="text-xs font-medium text-gray-900">{entry.title}</div>
-                  <div className="text-xs text-gray-500">{new Date(entry.date).getFullYear()}</div>
-                </li>
-              ))
+              <ul className="space-y-3">
+                {onThisDayEntries.map((entry: any) => (
+                  <li key={entry.id} className="border-l-2 border-gray-300 px-3 py-2">
+                    <div className="text-xs font-medium text-gray-900">{entry.title}</div>
+                    <div className="text-xs text-gray-500">{new Date(entry.date).getFullYear()}</div>
+                  </li>
+                ))}
+              </ul>
             )}
-          </ul>
+          </div>
         </div>
       </div>
     </section>

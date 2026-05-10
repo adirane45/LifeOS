@@ -1,5 +1,6 @@
 "use client";
 import Link from 'next/link';
+import { logout } from '../app/auth/serverActions';
 import {
   Home,
   DollarSign,
@@ -32,6 +33,16 @@ export default function Sidebar() {
           </Link>
         ))}
       </nav>
+
+      <form action={logout} className="mt-6">
+        <button type="submit" className="w-full text-left flex items-center gap-3 p-2 rounded hover:bg-gray-100 text-sm text-red-600">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8v8" />
+          </svg>
+          <span>Logout</span>
+        </button>
+      </form>
     </div>
   );
 }

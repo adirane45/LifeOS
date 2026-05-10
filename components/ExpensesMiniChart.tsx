@@ -8,6 +8,10 @@ type DataPoint = {
 };
 
 export default function ExpensesMiniChart({ data }: { data: DataPoint[] }) {
+  if (!data?.length) {
+    return <div className="flex h-[180px] items-center justify-center rounded-xl bg-gray-50 text-sm text-gray-500">Not enough data to display chart.</div>;
+  }
+
   return (
     <ResponsiveContainer width="100%" height={180}>
       <LineChart data={data}>

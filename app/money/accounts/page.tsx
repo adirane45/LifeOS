@@ -1,5 +1,7 @@
 import { prisma } from '../../../lib/prisma';
 import { revalidatePath } from 'next/cache';
+import { Wallet } from 'lucide-react';
+import EmptyState from '../../../components/EmptyState';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,13 +17,20 @@ export default async function AccountsPage() {
 
     await prisma.account.create({ data: { name, type, currency, balance: initial, userId: 1 } });
     revalidatePath('/money');
+    revalidatePath('/money/accounts');
+    revalidatePath('/money/transactions');
   }
 
   async function deleteAccount(formData: FormData) {
     'use server';
     const id = Number(formData.get('id'));
-    await prisma.account.delete({ where: { id } });
+    await prisma.$transaction(async (tx) => {
+      await tx.transaction.deleteMany({ where: { accountId: id } });
+      await tx.account.delete({ where: { id } });
+    });
     revalidatePath('/money');
+    revalidatePath('/money/accounts');
+    revalidatePath('/money/transactions');
   }
 
   return (
@@ -34,7 +43,7 @@ export default async function AccountsPage() {
       <div className="grid gap-6 md:grid-cols-2">
         <div className="rounded-2xl border border-gray-200 bg-white p-4">
           <h3 className="text-lg font-medium">Add account</h3>
-          <form action={createAccount} className="mt-4 space-y-3">
+          <form id="add-account" action={createAccount} className="mt-4 space-y-3">
             <div>
               <label className="text-sm">Name</label>
               <input name="name" className="mt-1 w-full rounded border px-3 py-2" />
@@ -64,26 +73,28 @@ export default async function AccountsPage() {
 
         <div className="rounded-2xl border border-gray-200 bg-white p-4">
           <h3 className="text-lg font-medium">Existing accounts</h3>
-          <ul className="mt-4 space-y-3">
+          <div className="mt-4">
             {accounts.length === 0 ? (
-              <li className="text-sm text-gray-500">No accounts yet.</li>
+              <EmptyState icon={<Wallet />} title="No accounts yet" description="Start by creating your first account." actionLabel="Add account" actionHref="#add-account" />
             ) : (
-              accounts.map((a: any) => (
-                <li key={a.id} className="flex items-center justify-between">
-                  <div>
-                    <div className="text-sm font-medium">{a.name}</div>
-                    <div className="text-xs text-gray-500">{a.type} • {a.currency}</div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <form action={deleteAccount} method="post">
-                      <input type="hidden" name="id" value={String(a.id)} />
-                      <button type="submit" className="text-sm text-rose-600">Delete</button>
-                    </form>
-                  </div>
-                </li>
-              ))
+              <ul className="space-y-3">
+                {accounts.map((a: any) => (
+                  <li key={a.id} className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3">
+                    <div>
+                      <div className="text-sm font-medium">{a.name}</div>
+                      <div className="text-xs text-gray-500">{a.type} • {a.currency}</div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <form action={deleteAccount} method="post">
+                        <input type="hidden" name="id" value={String(a.id)} />
+                        <button type="submit" className="text-sm text-rose-600">Delete</button>
+                      </form>
+                    </div>
+                  </li>
+                ))}
+              </ul>
             )}
-          </ul>
+          </div>
         </div>
       </div>
     </section>

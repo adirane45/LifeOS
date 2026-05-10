@@ -2,9 +2,13 @@
 
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ScatterChart, Scatter } from 'recharts';
 
-export function WeightChart({ data }: { data: any[] }) {
-  if (data.length === 0) return <div className="text-sm text-gray-500">No weight data yet.</div>;
-  const sorted = data.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+function ChartEmptyState() {
+  return <div className="flex h-[300px] items-center justify-center rounded-xl bg-gray-50 text-sm text-gray-500">Not enough data to display chart.</div>;
+}
+
+export function WeightChart({ data }: { data?: any[] }) {
+  if (!data?.length) return <ChartEmptyState />;
+  const sorted = [...data].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   const chartData = sorted.map((m) => ({
     date: new Date(m.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
     weight: m.value
@@ -23,9 +27,9 @@ export function WeightChart({ data }: { data: any[] }) {
   );
 }
 
-export function SleepChart({ data }: { data: any[] }) {
-  if (data.length === 0) return <div className="text-sm text-gray-500">No sleep data yet.</div>;
-  const sorted = data.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+export function SleepChart({ data }: { data?: any[] }) {
+  if (!data?.length) return <ChartEmptyState />;
+  const sorted = [...data].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   const chartData = sorted.slice(-14).map((m) => ({
     date: new Date(m.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
     sleep: m.value
@@ -44,10 +48,10 @@ export function SleepChart({ data }: { data: any[] }) {
   );
 }
 
-export function MoodChart({ data }: { data: any[] }) {
-  if (data.length === 0) return <div className="text-sm text-gray-500">No mood data yet.</div>;
+export function MoodChart({ data }: { data?: any[] }) {
+  if (!data?.length) return <ChartEmptyState />;
   const moodMap: { [k: string]: number } = { happy: 3, neutral: 2, sad: 1, anxious: 1, calm: 3 };
-  const sorted = data.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  const sorted = [...data].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   const chartData = sorted.slice(-30).map((m) => ({
     date: new Date(m.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
     mood: moodMap[m.value.toLowerCase()] || 2

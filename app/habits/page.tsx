@@ -1,9 +1,11 @@
 import Link from 'next/link';
+import { ListChecks } from 'lucide-react';
 import { prisma } from '../../lib/prisma';
 import { computeStreak, getTodayLog, getMonthLogs } from '../../lib/habitHelpers';
 import { revalidatePath } from 'next/cache';
 import HabitCheckbox from '../../components/HabitCheckbox';
 import HabitHeatmap from '../../components/HabitHeatmap';
+import EmptyState from '../../components/EmptyState';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,9 +13,14 @@ function startOfDay(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
-export default async function HabitsPage({ searchParams }: { searchParams: Promise<{ habitId?: string }> }) {
+export default async function HabitsPage({ searchParams }: { searchParams: Promise<{ habitId?: string; tzOffset?: string }> }) {
   const params = await searchParams;
   const userId = 1; // Hardcoded for now; use auth in production
+  
+  // Parse timezone offset from query string if provided (in minutes from UTC)
+  // Example: ?tzOffset=-300 for EST (UTC-5)
+  const timezoneOffsetMinutes = params.tzOffset ? parseInt(params.tzOffset, 10) : undefined;
+
   const habits = await prisma.habit.findMany({
     where: { userId },
     orderBy: { name: 'asc' }
@@ -21,8 +28,8 @@ export default async function HabitsPage({ searchParams }: { searchParams: Promi
 
   const habitsWithStreaks = await Promise.all(
     habits.map(async (h: any) => {
-      const streak = await computeStreak(h.id);
-      const todayLog = await getTodayLog(h.id);
+      const streak = await computeStreak(h.id, timezoneOffsetMinutes);
+      const todayLog = await getTodayLog(h.id, timezoneOffsetMinutes);
       return { ...h, streak, todayCompleted: todayLog?.completed ?? false };
     })
   );
@@ -35,7 +42,7 @@ export default async function HabitsPage({ searchParams }: { searchParams: Promi
     heatmapHabit = habitsWithStreaks.find((h) => h.id === id);
     if (heatmapHabit) {
       const now = new Date();
-      heatmapLogs = await getMonthLogs(id, now.getFullYear(), now.getMonth());
+      heatmapLogs = await getMonthLogs(id, now.getFullYear(), now.getMonth(), timezoneOffsetMinutes);
     }
   }
 
@@ -61,7 +68,7 @@ export default async function HabitsPage({ searchParams }: { searchParams: Promi
       <div className="grid gap-6 md:grid-cols-2">
         <div className="rounded-2xl border border-gray-200 bg-white p-4">
           <h3 className="text-lg font-medium">Add habit</h3>
-          <form action={addHabit} className="mt-4 space-y-3">
+          <form id="add-habit" action={addHabit} className="mt-4 space-y-3">
             <div>
               <label className="text-sm">Name</label>
               <input name="name" placeholder="e.g., Exercise" className="mt-1 w-full rounded border px-3 py-2" />
@@ -87,7 +94,7 @@ export default async function HabitsPage({ searchParams }: { searchParams: Promi
           <h3 className="text-lg font-medium">Today's habits</h3>
           <ul className="mt-4 space-y-3">
             {habitsWithStreaks.length === 0 ? (
-              <li className="text-sm text-gray-500">No habits yet.</li>
+              <EmptyState icon={<ListChecks />} title="No habits tracked yet." description="Create your first habit to start tracking." actionLabel="Add habit" actionHref="#add-habit" />
             ) : (
               habitsWithStreaks.map((h: any) => (
                 <li key={h.id} className="flex items-center gap-3">
@@ -131,8 +138,12 @@ export default async function HabitsPage({ searchParams }: { searchParams: Promi
                 ))}
               </ul>
             </div>
-            {heatmapHabit && (
-              <HabitHeatmap logs={heatmapLogs} year={new Date().getFullYear()} month={new Date().getMonth()} />
+            {heatmapHabit ? (
+              <HabitHeatmap logs={heatmapLogs} year={new Date().getFullYear()} month={new Date().getMonth()} timezoneOffsetMinutes={timezoneOffsetMinutes} />
+            ) : (
+              <div className="rounded-xl bg-gray-50 p-6 text-center text-sm text-gray-500">
+                Select a habit to view its monthly heatmap.
+              </div>
             )}
           </div>
         </div>

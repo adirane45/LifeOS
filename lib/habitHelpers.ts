@@ -1,5 +1,23 @@
 import { prisma } from './prisma';
 
+/**
+ * Compute the start of a day in the user's timezone.
+ * @param date - The date to compute from
+ * @param timezoneOffsetMinutes - User's timezone offset in minutes from UTC (e.g., -300 for EST)
+ *                                Defaults to server's timezone if not provided
+ */
+function startOfDayInTimezone(date: Date, timezoneOffsetMinutes?: number): Date {
+  const offsetMinutes = timezoneOffsetMinutes ?? -date.getTimezoneOffset();
+  const utcMs = date.getTime() + date.getTimezoneOffset() * 60000;
+  const localMs = utcMs + offsetMinutes * 60000;
+  const localDate = new Date(localMs);
+
+  return new Date(localDate.getFullYear(), localDate.getMonth(), localDate.getDate());
+}
+
+/**
+ * Legacy function for backward compatibility. Uses server's timezone.
+ */
 function startOfDay(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
@@ -11,10 +29,15 @@ function localDateKey(date: Date) {
   return `${year}-${month}-${day}`;
 }
 
-export async function computeStreak(habitId: number): Promise<number> {
+/**
+ * Compute the streak for a habit, accounting for user's timezone.
+ * @param habitId - The habit ID
+ * @param timezoneOffsetMinutes - User's timezone offset in minutes from UTC
+ */
+export async function computeStreak(habitId: number, timezoneOffsetMinutes?: number): Promise<number> {
   const now = new Date();
   let streak = 0;
-  let currentDate = startOfDay(now);
+  let currentDate = startOfDayInTimezone(now, timezoneOffsetMinutes);
 
   while (true) {
     const dateStart = currentDate;
@@ -33,9 +56,14 @@ export async function computeStreak(habitId: number): Promise<number> {
   return streak;
 }
 
-export async function getTodayLog(habitId: number) {
+/**
+ * Get today's habit log, accounting for user's timezone.
+ * @param habitId - The habit ID
+ * @param timezoneOffsetMinutes - User's timezone offset in minutes from UTC
+ */
+export async function getTodayLog(habitId: number, timezoneOffsetMinutes?: number) {
   const now = new Date();
-  const todayStart = startOfDay(now);
+  const todayStart = startOfDayInTimezone(now, timezoneOffsetMinutes);
   const tomorrowStart = new Date(todayStart);
   tomorrowStart.setDate(tomorrowStart.getDate() + 1);
 
@@ -44,12 +72,25 @@ export async function getTodayLog(habitId: number) {
   });
 }
 
-export async function getMonthLogs(habitId: number, year: number, month: number) {
-  const monthStart = new Date(year, month, 1);
-  const monthEnd = new Date(year, month + 1, 1);
+/**
+ * Get all habit logs for a month, accounting for user's timezone.
+ * @param habitId - The habit ID
+ * @param year - The year
+ * @param month - The month (0-indexed)
+ * @param timezoneOffsetMinutes - User's timezone offset in minutes from UTC
+ */
+export async function getMonthLogs(habitId: number, year: number, month: number, timezoneOffsetMinutes?: number) {
+  // Compute month boundaries in the user's timezone
+  const monthStartLocalDate = new Date(year, month, 1);
+  const monthEndLocalDate = new Date(year, month + 1, 1);
+
+  // Convert to UTC for Prisma query
+  const offsetMinutes = timezoneOffsetMinutes ?? -new Date().getTimezoneOffset();
+  const monthStartUTC = new Date(monthStartLocalDate.getTime() - offsetMinutes * 60000);
+  const monthEndUTC = new Date(monthEndLocalDate.getTime() - offsetMinutes * 60000);
 
   return prisma.habitLog.findMany({
-    where: { habitId, date: { gte: monthStart, lt: monthEnd } },
+    where: { habitId, date: { gte: monthStartUTC, lt: monthEndUTC } },
     orderBy: { date: 'asc' }
   });
 }

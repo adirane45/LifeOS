@@ -10,9 +10,16 @@ export default function HabitCheckbox({ habitId, initialCompleted }: { habitId: 
   const toggleCompletion = async () => {
     startTransition(async () => {
       setIsCompletedOptimistic(!isCompletedOptimistic);
+      
+      // Get the user's timezone offset in minutes from UTC
+      const timezoneOffsetMinutes = new Date().getTimezoneOffset() * -1;
+      
       const res = await fetch(`/api/habits/${habitId}/toggle`, {
-        method: 'POST'
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ timezoneOffsetMinutes })
       });
+      
       if (!res.ok) {
         // Revert on error
         setIsCompletedOptimistic(initialCompleted);

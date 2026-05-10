@@ -1,47 +1,103 @@
 import { prisma } from './prisma';
 
+type TransactionType = 'INCOME' | 'EXPENSE';
+
+function toSignedAmount(amount: number, type: TransactionType) {
+  const safeAmount = Math.abs(amount);
+  return type === 'INCOME' ? safeAmount : -safeAmount;
+}
+
 export async function createTransactionAndUpdateBalance(data: {
   accountId: number;
   amount: number;
   category: string;
   description?: string | null;
   date: Date;
-  type: 'INCOME' | 'EXPENSE';
+  type: TransactionType;
 }) {
-  const signed = data.type === 'INCOME' ? data.amount : -Math.abs(data.amount);
+  const signed = toSignedAmount(data.amount, data.type);
 
-  return await prisma.$transaction([
-    prisma.transaction.create({ data: {
-      accountId: data.accountId,
-      amount: data.amount,
-      category: data.category,
-      description: data.description,
-      date: data.date,
-      type: data.type
-    }}),
-    prisma.account.update({ where: { id: data.accountId }, data: { balance: { increment: signed } } })
-  ]);
+  return prisma.$transaction(async (tx) => {
+    const created = await tx.transaction.create({
+      data: {
+        accountId: data.accountId,
+        amount: Math.abs(data.amount),
+        category: data.category,
+        description: data.description,
+        date: data.date,
+        type: data.type
+      }
+    });
+
+    await tx.account.update({
+      where: { id: data.accountId },
+      data: { balance: { increment: signed } }
+    });
+
+    return created;
+  });
 }
 
 export async function deleteTransactionAndRevertBalance(transactionId: number) {
-  const tx = await prisma.transaction.findUnique({ where: { id: transactionId } });
-  if (!tx) return null;
-  const signed = tx.type === 'INCOME' ? -tx.amount : Math.abs(tx.amount);
+  return prisma.$transaction(async (tx) => {
+    const transaction = await tx.transaction.findUnique({ where: { id: transactionId } });
+    if (!transaction) return null;
 
-  return await prisma.$transaction([
-    prisma.transaction.delete({ where: { id: transactionId } }),
-    prisma.account.update({ where: { id: tx.accountId }, data: { balance: { increment: signed } } })
-  ]);
+    const signed = toSignedAmount(transaction.amount, transaction.type) * -1;
+
+    await tx.transaction.delete({ where: { id: transactionId } });
+    await tx.account.update({
+      where: { id: transaction.accountId },
+      data: { balance: { increment: signed } }
+    });
+
+    return transaction;
+  });
 }
 
 export async function recalculateAccountBalance(accountId: number) {
-  const res = await prisma.transaction.aggregate({ where: { accountId }, _sum: { amount: true } });
-  const sum = res._sum.amount ?? 0;
-  // Sum only transactions where INCOME adds and EXPENSE subtracts
-  const transactions = await prisma.transaction.findMany({ where: { accountId }, select: { amount: true, type: true } });
-  let total = 0;
-  for (const t of transactions) {
-    total += t.type === 'INCOME' ? t.amount : -t.amount;
-  }
-  return prisma.account.update({ where: { id: accountId }, data: { balance: total } });
+  return prisma.$transaction(async (tx) => {
+    const transactions = await tx.transaction.findMany({
+      where: { accountId },
+      select: { amount: true, type: true }
+    });
+
+    let total = 0;
+    for (const transaction of transactions) {
+      total += transaction.type === 'INCOME' ? transaction.amount : -transaction.amount;
+    }
+
+    return tx.account.update({
+      where: { id: accountId },
+      data: { balance: total }
+    });
+  });
+}
+
+export async function recalculateAllAccountBalances() {
+  return prisma.$transaction(async (tx) => {
+    const accounts = await tx.account.findMany({ select: { id: true, name: true } });
+    const updatedBalances: Array<{ id: number; name: string; balance: number }> = [];
+
+    for (const account of accounts) {
+      const transactions = await tx.transaction.findMany({
+        where: { accountId: account.id },
+        select: { amount: true, type: true }
+      });
+
+      let balance = 0;
+      for (const transaction of transactions) {
+        balance += transaction.type === 'INCOME' ? transaction.amount : -transaction.amount;
+      }
+
+      await tx.account.update({
+        where: { id: account.id },
+        data: { balance }
+      });
+
+      updatedBalances.push({ id: account.id, name: account.name, balance });
+    }
+
+    return updatedBalances;
+  });
 }

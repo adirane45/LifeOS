@@ -1,7 +1,10 @@
 import { prisma } from '../../lib/prisma';
 import { getMetricsByType, formatMetricValue } from '../../lib/healthHelpers';
 import { revalidatePath } from 'next/cache';
+import { Heart } from 'lucide-react';
 import { WeightChart, SleepChart, MoodChart } from '../../components/HealthCharts';
+import EmptyState from '../../components/EmptyState';
+import ChartErrorBoundary from '../../components/ChartErrorBoundary';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,7 +43,7 @@ export default async function HealthPage() {
 
       <div className="rounded-2xl border border-gray-200 bg-white p-4">
         <h3 className="text-lg font-medium">Log metric</h3>
-        <form action={addMetric} className="mt-4 grid gap-3 md:grid-cols-3">
+        <form id="log-metric" action={addMetric} className="mt-4 grid gap-3 md:grid-cols-3">
           <div>
             <label className="text-sm">Type</label>
             <select name="type" className="mt-1 w-full rounded border px-3 py-2">
@@ -75,7 +78,9 @@ export default async function HealthPage() {
           <h3 className="text-lg font-medium">Weight over time</h3>
           <p className="text-sm text-gray-500">In kilograms</p>
           <div className="mt-4">
-            <WeightChart data={weightMetrics} />
+            <ChartErrorBoundary>
+              <WeightChart data={weightMetrics} />
+            </ChartErrorBoundary>
           </div>
         </div>
 
@@ -83,7 +88,9 @@ export default async function HealthPage() {
           <h3 className="text-lg font-medium">Sleep hours (last 14 days)</h3>
           <p className="text-sm text-gray-500">In hours</p>
           <div className="mt-4">
-            <SleepChart data={sleepMetrics} />
+            <ChartErrorBoundary>
+              <SleepChart data={sleepMetrics} />
+            </ChartErrorBoundary>
           </div>
         </div>
       </div>
@@ -92,7 +99,9 @@ export default async function HealthPage() {
         <h3 className="text-lg font-medium">Mood tracker (last 30 days)</h3>
         <p className="text-sm text-gray-500">Mood entries visualized</p>
         <div className="mt-4">
-          <MoodChart data={moodMetrics} />
+          <ChartErrorBoundary>
+            <MoodChart data={moodMetrics} />
+          </ChartErrorBoundary>
         </div>
       </div>
 
@@ -100,7 +109,7 @@ export default async function HealthPage() {
         <h3 className="text-lg font-medium">Recent entries</h3>
         <ul className="mt-4 space-y-3">
           {metrics.length === 0 ? (
-            <li className="text-sm text-gray-500">No metrics logged yet.</li>
+            <EmptyState icon={<Heart />} title="No health data recorded." description="Start logging your health metrics." actionLabel="Log metric" actionHref="#log-metric" />
           ) : (
             metrics.map((m: any) => (
               <li key={m.id} className="flex items-center justify-between">
