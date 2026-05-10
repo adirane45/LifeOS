@@ -1,0 +1,130 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+ 
+}
+
+enum AccountType {
+  CHECKING
+  SAVINGS
+  CREDIT
+  INVESTMENT
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
+
+enum HabitFrequency {
+  DAILY
+  WEEKLY
+}
+
+enum HealthMetricType {
+  WEIGHT
+  SLEEP
+  HEART_RATE
+  STEPS
+  MOOD
+  WATER_INTAKE
+}
+
+model User {
+  id             Int             @id @default(autoincrement())
+  name           String
+  email          String          @unique
+  preferences    Json?
+  accounts       Account[]
+  budgets        Budget[]
+  habits         Habit[]
+  healthMetrics  HealthMetric[]
+  journalEntries JournalEntry[]
+  goals          Goal[]
+}
+
+model Account {
+  id           Int            @id @default(autoincrement())
+  userId       Int
+  name         String
+  type         AccountType
+  currency     String
+  balance      Float          @default(0)
+  user         User           @relation(fields: [userId], references: [id])
+  transactions Transaction[]
+}
+
+model Transaction {
+  id          Int             @id @default(autoincrement())
+  accountId   Int
+  amount      Float
+  category    String
+  description String?
+  date        DateTime
+  type        TransactionType
+  account     Account         @relation(fields: [accountId], references: [id])
+}
+
+model Budget {
+  id       Int      @id @default(autoincrement())
+  userId   Int
+  category String
+  amount   Float
+  month    DateTime
+  user     User     @relation(fields: [userId], references: [id])
+}
+
+model Habit {
+  id          Int           @id @default(autoincrement())
+  userId      Int
+  name        String
+  frequency   HabitFrequency
+  targetCount Int
+  user        User          @relation(fields: [userId], references: [id])
+  logs        HabitLog[]
+}
+
+model HabitLog {
+  id        Int      @id @default(autoincrement())
+  habitId   Int
+  date      DateTime
+  completed Boolean
+  count     Int      @default(1)
+  habit     Habit    @relation(fields: [habitId], references: [id])
+
+  @@unique([habitId, date])
+}
+
+model HealthMetric {
+  id     Int               @id @default(autoincrement())
+  userId Int
+  type   HealthMetricType
+  value  Float
+  unit   String?
+  date   DateTime
+  user   User              @relation(fields: [userId], references: [id])
+}
+
+model JournalEntry {
+  id      Int      @id @default(autoincrement())
+  userId  Int
+  title   String
+  content String
+  mood    String?
+  date    DateTime
+  user    User     @relation(fields: [userId], references: [id])
+}
+
+model Goal {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  title       String
+  description String?
+  targetDate  DateTime?
+  completed   Boolean  @default(false)
+  category    String
+  user        User     @relation(fields: [userId], references: [id])
+}

@@ -1,0 +1,36 @@
+{
+  "name": "lifeos",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev --name init --preview-feature"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "@prisma/adapter-better-sqlite3": "^7.8.0",
+    "@prisma/client": "*",
+    "@tailwindcss/postcss": "^4.3.0",
+    "autoprefixer": "*",
+    "better-sqlite3": "^12.9.0",
+    "clsx": "*",
+    "cohere-ai": "^8.0.0",
+    "lucide-react": "*",
+    "next": "*",
+    "openai": "^6.37.0",
+    "postcss": "*",
+    "prisma": "*",
+    "react": "*",
+    "react-dom": "*",
+    "recharts": "*",
+    "tailwindcss": "*",
+    "typescript": "*"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "25.6.2"
+  }
+}
