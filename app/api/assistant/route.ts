@@ -1,8 +1,16 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { prisma } from '../../../lib/prisma';
+import { addTransaction, createJournalEntry, logHabit } from '../../../lib/assistantTools';
 
 export const runtime = 'nodejs';
+
+type AssistantMessage = { role: 'user' | 'assistant'; content: string };
+
+type ToolInvocation = {
+  tool: 'add_transaction' | 'log_habit' | 'create_journal_entry';
+  params: Record<string, any>;
+};
 
 function getErrorDetails(err: unknown) {
   if (err && typeof err === 'object') {
@@ -14,6 +22,137 @@ function getErrorDetails(err: unknown) {
   }
 
   return { message: String(err), status: undefined, body: undefined };
+}
+
+function extractToolInvocation(content: string): { text: string; tool?: ToolInvocation } {
+  // First try to match fenced JSON block at the end
+  const fencedMatch = content.match(/```json\s*([\s\S]*?)\s*```\s*$/i);
+  if (fencedMatch) {
+    try {
+      const parsed = JSON.parse(fencedMatch[1].trim()) as ToolInvocation;
+      if (
+        parsed &&
+        typeof parsed === 'object' &&
+        typeof parsed.tool === 'string' &&
+        (parsed.tool === 'add_transaction' || parsed.tool === 'log_habit' || parsed.tool === 'create_journal_entry') &&
+        parsed.params &&
+        typeof parsed.params === 'object'
+      ) {
+        const text = content.replace(fencedMatch[0], '').trim();
+        return { text, tool: parsed };
+      }
+    } catch {
+      // Fall through to raw JSON detection
+    }
+  }
+
+  // Try to find raw JSON block at the end of content
+  const trimmed = content.trim();
+  let lastBraceIndex = trimmed.lastIndexOf('}');
+  if (lastBraceIndex <= 0) {
+    return { text: content };
+  }
+
+  // Find the matching opening brace
+  let braceCount = 0;
+  let openingBraceIndex = -1;
+  for (let i = lastBraceIndex; i >= 0; i--) {
+    if (trimmed[i] === '}') braceCount++;
+    if (trimmed[i] === '{') {
+      braceCount--;
+      if (braceCount === 0) {
+        openingBraceIndex = i;
+        break;
+      }
+    }
+  }
+
+  if (openingBraceIndex < 0) {
+    return { text: content };
+  }
+
+  const rawJson = trimmed.slice(openingBraceIndex);
+  try {
+    const parsed = JSON.parse(rawJson) as ToolInvocation;
+    if (
+      parsed &&
+      typeof parsed === 'object' &&
+      typeof parsed.tool === 'string' &&
+      (parsed.tool === 'add_transaction' || parsed.tool === 'log_habit' || parsed.tool === 'create_journal_entry') &&
+      parsed.params &&
+      typeof parsed.params === 'object'
+    ) {
+      const text = trimmed.slice(0, openingBraceIndex).trim();
+      return { text, tool: parsed };
+    }
+  } catch {
+    // Not valid JSON, return full content
+  }
+
+  return { text: content };
+}
+
+function buildToolConfirmation(tool: ToolInvocation, result: { ok: boolean; data?: any; error?: string }, lookup: { accounts: Map<number, any>; habits: Map<number, any> }) {
+  if (!result.ok) {
+    return `I couldn't complete that action: ${result.error ?? 'Unknown error.'}`;
+  }
+
+  if (tool.tool === 'add_transaction') {
+    const account = lookup.accounts.get(Number(tool.params.accountId));
+    const amount = Number(tool.params.amount ?? result.data?.amount ?? 0);
+    const category = String(tool.params.category ?? result.data?.category ?? 'transaction');
+    const type = String(tool.params.type ?? result.data?.type ?? 'transaction').toLowerCase();
+    const accountName = account?.name ?? `account ${tool.params.accountId}`;
+    return `Logged ₹${amount.toFixed(2)} ${type} for ${category} in ${accountName}.`;
+  }
+
+  if (tool.tool === 'log_habit') {
+    const habit = lookup.habits.get(Number(tool.params.habitId));
+    const habitName = habit?.name ?? `habit ${tool.params.habitId}`;
+    return `Marked ${habitName} as done for today.`;
+  }
+
+  const title = String(tool.params.title ?? result.data?.title ?? 'journal entry');
+  return `Created journal entry "${title}".`;
+}
+
+async function executeTool(tool: ToolInvocation) {
+  switch (tool.tool) {
+    case 'add_transaction':
+      return addTransaction(
+        Number(tool.params.accountId),
+        tool.params.type,
+        Number(tool.params.amount),
+        String(tool.params.category ?? ''),
+        tool.params.description ? String(tool.params.description) : undefined,
+        tool.params.date ? String(tool.params.date) : undefined
+      );
+    case 'log_habit':
+      return logHabit(Number(tool.params.habitId));
+    case 'create_journal_entry':
+      return createJournalEntry(String(tool.params.title ?? ''), String(tool.params.content ?? ''), tool.params.mood ? String(tool.params.mood) : undefined);
+    default:
+      return { ok: false, error: 'Unknown tool.' };
+  }
+}
+
+function makeSseResponse(content: string) {
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    start(controller) {
+      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content })}\n\n`));
+      controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+      controller.close();
+    }
+  });
+
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache, no-transform',
+      Connection: 'keep-alive'
+    }
+  });
 }
 
 export async function POST(req: Request) {
@@ -29,11 +168,12 @@ export async function POST(req: Request) {
     });
 
     const body = await req.json();
-    const messages: Array<{ role: string; content: string }> = body.messages ?? [];
+    const messages: AssistantMessage[] = body.messages ?? [];
+    const userId = 1;
 
     // Gather live snapshot from Prisma
     // Total net worth
-    const accounts = await prisma.account.findMany();
+    const accounts = await prisma.account.findMany({ where: { userId } });
     const totalNetWorth = accounts.reduce((s, a) => s + Number(a.balance ?? 0), 0);
 
     // Today's expenses
@@ -55,7 +195,7 @@ export async function POST(req: Request) {
     const todaysExpenses = todaysExpensesResult._sum.amount ?? 0;
 
     // Habits with simple streak (count of consecutive days including today)
-    const habits = await prisma.habit.findMany({ where: { userId: 1 } });
+    const habits = await prisma.habit.findMany({ where: { userId } });
     const habitStreaks: Array<{ id: number; name: string; streak: number }> = [];
     for (const h of habits) {
       const logs = await prisma.habitLog.findMany({
@@ -80,7 +220,7 @@ export async function POST(req: Request) {
     }
 
     // Latest health metrics (most recent by type)
-    const metrics = await prisma.healthMetric.findMany({ where: { userId: 1 }, orderBy: { date: 'desc' } });
+    const metrics = await prisma.healthMetric.findMany({ where: { userId }, orderBy: { date: 'desc' } });
     const latestMetricsMap = new Map<string, any>();
     for (const m of metrics) {
       if (!latestMetricsMap.has(m.type)) latestMetricsMap.set(m.type, m);
@@ -88,12 +228,16 @@ export async function POST(req: Request) {
     const latestMetrics = Array.from(latestMetricsMap.entries()).map(([type, metric]) => ({ type, metric }));
 
     // Last 5 journal entries
-    const journals = await prisma.journalEntry.findMany({ where: { userId: 1 }, orderBy: { date: 'desc' }, take: 5 });
+    const journals = await prisma.journalEntry.findMany({ where: { userId }, orderBy: { date: 'desc' }, take: 5 });
 
     // Build data summary
     const summaryLines: string[] = [];
-    summaryLines.push(`Net worth: $${totalNetWorth.toFixed(2)}`);
-    summaryLines.push(`Today's expenses: $${Number(todaysExpenses).toFixed(2)}`);
+    summaryLines.push(`Net worth: ₹${totalNetWorth.toFixed(2)}`);
+    summaryLines.push(`Today's expenses: ₹${Number(todaysExpenses).toFixed(2)}`);
+    summaryLines.push('Accounts:');
+    for (const account of accounts) {
+      summaryLines.push(`- ${account.id}: ${account.name} (${account.type}, ${account.currency}) balance ${Number(account.balance ?? 0).toFixed(2)}`);
+    }
     summaryLines.push('Habits:');
     for (const h of habitStreaks) {
       summaryLines.push(`- ${h.name}: ${h.streak} day(s) streak`);
@@ -107,7 +251,34 @@ export async function POST(req: Request) {
       summaryLines.push(`- ${j.title} (${j.mood ?? 'no mood'}) on ${new Date(j.date).toLocaleDateString()}`);
     }
 
-    const systemInstruction = `You are LifeOS AI, a personal assistant with deep, real-time knowledge of the user's life data. Be concise, insightful, and helpful. Reference the user's real data when relevant. Here is a live snapshot:\n${summaryLines.join('\n')}`;
+    // Build habit list for the system prompt
+    const habitList = habitStreaks.map((h) => `{ id: ${h.id}, name: "${h.name}" }`).join(', ');
+
+    const systemInstruction = `You are LifeOS AI, a personal assistant with deep, real-time knowledge of the user's life data. Be concise, insightful, and helpful. Reference the user's real data when relevant.
+
+--- Tools available:
+1. add_transaction(accountId: number, type: 'INCOME'|'EXPENSE', amount: number, category: string, description?: string, date?: string)
+   - accountId and amount must be numbers
+   - Example: { "tool": "add_transaction", "params": { "accountId": 1, "type": "EXPENSE", "amount": 500, "category": "groceries" } }
+
+2. log_habit(habitId: number)
+   - habitId MUST be a number (from the list below), NOT the habit name
+   - Habit IDs: [ ${habitList} ]
+   - Example: { "tool": "log_habit", "params": { "habitId": 1 } }
+   - CRITICAL: When a user asks to mark a habit, use the numeric habitId from the list above.
+
+3. create_journal_entry(title: string, content: string, mood?: string)
+   - Example: { "tool": "create_journal_entry", "params": { "title": "Today's thoughts", "content": "...", "mood": "happy" } }
+
+INSTRUCTION: If the user's request requires one of these actions, you MUST output a JSON block at the very end of your response in this exact format:
+\`\`\`json
+{ "tool": "tool_name", "params": { ...params... } }
+\`\`\`
+
+Use ONLY ONE tool block. Make sure it is the final content. Do not output JSON if you are only answering a question.
+
+Here is a live snapshot:
+${summaryLines.join('\n')}`;
 
     const messagesWithRoles = messages.filter((message) => message.role === 'user' || message.role === 'assistant');
     const lastUserIndex = [...messagesWithRoles].map((message) => message.role).lastIndexOf('user');
@@ -154,24 +325,33 @@ export async function POST(req: Request) {
       }
     }
 
-    const encoder = new TextEncoder();
-    const stream = new ReadableStream({
-      async start(controller) {
-        try {
-          for await (const chunk of completion) {
-            const text = chunk.choices?.[0]?.delta?.content || '';
-            if (!text) continue;
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ content: text })}\n\n`));
-          }
-          controller.enqueue(encoder.encode('data: [DONE]\n\n'));
-          controller.close();
-        } catch (err: any) {
-          controller.error(err);
-        }
-      }
-    });
+    // **PASS 1**: Collect the entire streamed response into a buffer
+    let fullResponse = '';
+    for await (const chunk of completion) {
+      const text = chunk.choices?.[0]?.delta?.content || '';
+      if (text) fullResponse += text;
+    }
 
-    return new Response(stream, { headers: { 'Content-Type': 'text/event-stream' } });
+    // Parse for tool invocation in the full response
+    const extracted = extractToolInvocation(fullResponse);
+    let finalResponseToStream = '';
+
+    if (extracted.tool) {
+      // Tool was found; execute it server-side
+      const accountsById = new Map(accounts.map((account) => [account.id, account]));
+      const habitsById = new Map(habitStreaks.map((habit) => [habit.id, habit]));
+      const toolResult = await executeTool(extracted.tool);
+      
+      // Build a simple confirmation message
+      const confirmation = buildToolConfirmation(extracted.tool, toolResult, { accounts: accountsById, habits: habitsById });
+      finalResponseToStream = confirmation;
+    } else {
+      // No tool found; use the cleaned response (with trailing JSON removed)
+      finalResponseToStream = extracted.text || fullResponse || 'I am ready to help.';
+    }
+
+    // Stream the final response to the client
+    return makeSseResponse(finalResponseToStream);
   } catch (err: any) {
     const details = getErrorDetails(err);
     return NextResponse.json(

@@ -8,6 +8,7 @@ import {
   Heart,
   BookOpen,
   MessageSquare,
+  Target,
   Settings as SettingsIcon,
   X
 } from 'lucide-react';
@@ -18,6 +19,7 @@ const nav = [
   { name: 'Habits', href: '/habits', icon: CheckCircle },
   { name: 'Health', href: '/health', icon: Heart },
   { name: 'Journal', href: '/journal', icon: BookOpen },
+  { name: 'Goals', href: '/goals', icon: Target },
   { name: 'Assistant', href: '/assistant', icon: MessageSquare },
   { name: 'Settings', href: '/settings', icon: SettingsIcon }
 ];

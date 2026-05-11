@@ -130,5 +130,8 @@ model Goal {
   targetDate  DateTime?
   completed   Boolean  @default(false)
   category    String
+  targetValue Float?
+  currentValue Float?
+  unit        String?
   user        User     @relation(fields: [userId], references: [id])
 }

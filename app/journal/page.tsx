@@ -54,9 +54,14 @@ export default async function JournalPage() {
 
   return (
     <section className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-semibold">Journal</h2>
-        <p className="text-sm text-gray-500">Capture your thoughts and reflect on life.</p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h2 className="text-2xl font-semibold">Journal</h2>
+          <p className="text-sm text-gray-500">Capture your thoughts and reflect on life.</p>
+        </div>
+        <a href="/api/export/journal" download className="inline-flex items-center justify-center rounded bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-700">
+          Export CSV
+        </a>
       </div>
 
       <div className="grid gap-6 md:grid-cols-[1fr_250px]">

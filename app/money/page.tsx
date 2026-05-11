@@ -1,19 +1,118 @@
 import Link from 'next/link';
-import { ArrowDownRight, ArrowUpRight, PlusCircle, Wallet } from 'lucide-react';
+import { ArrowDownRight, ArrowUpRight, PlusCircle, TrendingDown, Wallet } from 'lucide-react';
 import { prisma } from '../../lib/prisma';
 import EmptyState from '../../components/EmptyState';
 
 export const dynamic = 'force-dynamic';
 
+function monthStart(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
+function nextMonthStart(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth() + 1, 1);
+}
+
 export default async function MoneyPage() {
-  const accounts = await prisma.account.findMany({ orderBy: { id: 'asc' } });
-  const recent = await prisma.transaction.findMany({ orderBy: { date: 'desc' }, take: 10, include: { account: true } });
+  const now = new Date();
+  const start = monthStart(now);
+  const end = nextMonthStart(start);
+
+  const user = await prisma.user.findFirst();
+  const userId = user?.id;
+
+  const [accounts, recent, activeBudgets, monthExpenses] = await Promise.all([
+    prisma.account.findMany({ orderBy: { id: 'asc' } }),
+    prisma.transaction.findMany({ orderBy: { date: 'desc' }, take: 10, include: { account: true } }),
+    userId
+      ? prisma.budget.findMany({
+          where: {
+            userId,
+            month: {
+              gte: start,
+              lt: end
+            }
+          },
+          orderBy: { category: 'asc' }
+        })
+      : Promise.resolve([]),
+    userId
+      ? prisma.transaction.findMany({
+          where: {
+            account: { userId },
+            type: 'EXPENSE',
+            date: { gte: start, lt: end }
+          },
+          select: { category: true, amount: true }
+        })
+      : Promise.resolve([])
+  ]);
+
+  const spentByCategory = new Map<string, number>();
+  for (const tx of monthExpenses) {
+    spentByCategory.set(tx.category, (spentByCategory.get(tx.category) ?? 0) + tx.amount);
+  }
+
+  const budgetAlerts = activeBudgets.map((budget: any) => {
+    const spent = spentByCategory.get(budget.category) ?? 0;
+    const percent = budget.amount > 0 ? (spent / budget.amount) * 100 : 0;
+    return {
+      budget,
+      spent,
+      percent,
+      overspent: spent > budget.amount,
+      nearLimit: spent <= budget.amount && percent >= 80
+    };
+  });
 
   return (
     <section className="space-y-6">
       <div>
         <h2 className="text-2xl font-semibold">Money</h2>
         <p className="text-sm text-gray-500">Overview of accounts and recent transactions.</p>
+        <div className="mt-2 flex items-center gap-3 text-sm">
+          <Link href="/money/accounts" className="text-blue-600 hover:text-blue-700">Accounts</Link>
+          <Link href="/money/transactions" className="text-blue-600 hover:text-blue-700">Transactions</Link>
+          <Link href="/money/budgets" className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700">
+            <TrendingDown className="h-4 w-4" />
+            Budgets
+          </Link>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-gray-200 bg-white p-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-medium">Budget alerts</h3>
+          <Link href="/money/budgets" className="text-sm text-blue-600">Manage budgets</Link>
+        </div>
+        <div className="mt-4 space-y-3">
+          {budgetAlerts.length === 0 ? (
+            <div className="rounded-xl bg-gray-50 p-4 text-sm text-gray-600">Set a monthly budget to track your spending.</div>
+          ) : (
+            budgetAlerts.map(({ budget, spent, percent, overspent, nearLimit }) => {
+              const overspendBy = Math.max(0, spent - budget.amount);
+              return (
+                <div key={budget.id} className="rounded-xl bg-gray-50 p-4">
+                  {overspent ? (
+                    <p className="text-sm font-medium text-rose-700">⚠️ You've overspent on {budget.category} by ₹{overspendBy.toFixed(2)} (Budget: ₹{budget.amount.toFixed(2)})</p>
+                  ) : nearLimit ? (
+                    <p className="text-sm font-medium text-amber-700">📊 You've used {percent.toFixed(0)}% of your {budget.category} budget.</p>
+                  ) : (
+                    <p className="text-sm text-emerald-700">{budget.category} is within budget.</p>
+                  )}
+
+                  <div className="mt-2 h-2 w-full rounded-full bg-gray-200">
+                    <div
+                      className={`h-2 rounded-full ${overspent ? 'bg-rose-500' : nearLimit ? 'bg-amber-500' : 'bg-emerald-500'}`}
+                      style={{ width: `${Math.min(percent, 100)}%` }}
+                    />
+                  </div>
+                  <p className="mt-1 text-xs text-gray-500">Spent ₹{spent.toFixed(2)} of ₹{budget.amount.toFixed(2)}</p>
+                </div>
+              );
+            })
+          )}
+        </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
