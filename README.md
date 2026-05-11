@@ -1,407 +1,119 @@
-++ A:\Programming\Project\LifeOS\README.md
-# <div align="center"> 🚀 LifeOS </div>
+---
 
-<div align="center">
+<!-- PREMIUM README: modern, neon-styled, developer friendly -->
 
-### *A Personal Operating System for Life Management*
+<p align="center">
+  <!-- Animated neon header (SVG) -->
+  <img alt="LifeOS — Personal OS" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1000' height='260' viewBox='0 0 1000 260'><defs><linearGradient id='a' x1='0' x2='1'><stop offset='0' stop-color='%2300ffd5'/><stop offset='1' stop-color='%23ff00ba'/></linearGradient><style>text{font-family:Inter,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-weight:800;fill:url(%23a);font-size:54px;letter-spacing:1px;filter:drop-shadow(0 18px 36px rgba(0,0,0,.6));} .sub{font-size:16px;fill:%23cbd5e1;font-weight:600;} .pulse{animation:pulse 2.8s infinite;} @keyframes pulse{0%{opacity:.85;transform:translateY(0)}50%{opacity:1;transform:translateY(-2px)}100%{opacity:.85;transform:translateY(0)}}</style></defs><rect width='100%' height='100%' fill='%23061217'/><g transform='translate(48,72)'><text x='0' y='64'>LifeOS</text><text class='sub' x='0' y='96'>Personal OS — money · habits · health · journal · goals</text><g transform='translate(560,36)'><circle cx='40' cy='10' r='10' fill='%23ff7ab6' class='pulse'/></g></g></svg>" style="max-width:100%;border-radius:12px;" />
+</p>
 
-[![Next.js](https://img.shields.io/badge/Next.js-16.2.6-black?style=flat-square&logo=nextdotjs)](https://nextjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
-[![React](https://img.shields.io/badge/React-19-cyan?style=flat-square&logo=react)](https://react.dev/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind-4.3.0-cyan?style=flat-square&logo=tailwindcss)](https://tailwindcss.com/)
-[![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
+<p align="center">
+  <a href="https://github.com/adirane45/LifeOS"><img src="https://img.shields.io/github/stars/adirane45/LifeOS?style=for-the-badge&label=Stars&color=ff0080" alt="GitHub stars"/></a>
+  <a href="https://github.com/adirane45/LifeOS/network/members"><img src="https://img.shields.io/github/forks/adirane45/LifeOS?style=for-the-badge&label=Forks&color=00d4ff" alt="Forks"/></a>
+  <a href="https://github.com/adirane45/LifeOS/actions"><img src="https://img.shields.io/github/actions/workflow/status/adirane45/LifeOS/ci.yml?style=for-the-badge&label=CI&color=6ee7b7" alt="CI"/></a>
+  <a href="https://github.com/adirane45/LifeOS"><img src="https://img.shields.io/github/license/adirane45/LifeOS?style=for-the-badge&label=License&color=7c3aed" alt="License"/></a>
+</p>
 
-**Comprehensive personal dashboard • Real-time health tracking • AI-powered insights • Dark mode • Mobile responsive**
-
-[🎯 Features](#-features) • [📚 Tech Stack](#-tech-stack) • [🚀 Quick Start](#-quick-start) • [📖 Documentation](#-documentation)
-
-</div>
+<p align="center">
+  <a href="#project-preview">Preview</a> · <a href="#features">Features</a> · <a href="#architecture--workflow">Architecture</a> · <a href="#installation">Install</a>
+</p>
 
 ---
 
-## ✨ Hero Section
+## About
 
-<div align="center">
+**Project Name:** LifeOS  
+**Tagline:** Personal OS for Life — track money, habits, health, journal, and goals  
+**Type:** Web App (Next.js App Router)  
 
-### Transform Your Life Into a Manageable Operating System
+LifeOS is a unified personal dashboard built with Next.js and TypeScript that helps you organize finances, health metrics, habits, journaling, and goals — all from one fast, privacy-first interface.
 
-LifeOS is a **next-generation personal productivity platform** that brings order to every corner of your life.
+### Quick Links
 
-Track your **finances**, **habits**, **health**, **goals**, and **journal entries** all in one beautifully designed dashboard.
-
-Powered by **AI-assisted insights** and built with **cutting-edge web technologies**.
-
-```
-╔════════════════════════════════════════════════════════════════╗
-║                                                                ║
-║          🌍 Your Life. Organized. Optimized. Automated.        ║
-║                                                                ║
-║     Money  →  Health  →  Habits  →  Goals  →  Journal         ║
-║                         ↓                                      ║
-║                    AI ASSISTANT                                ║
-║                                                                ║
-╚════════════════════════════════════════════════════════════════╝
-```
-
-</div>
+- Repo: https://github.com/adirane45/LifeOS
+- Demo: (add demo link)
+- Website: (add website link)
 
 ---
 
-## 🎯 Features
+## Project Preview
 
-<div align="center">
+![dashboard](public/screenshots/preview-1.png)
 
-### Everything You Need to Master Your Life
+<details>
+<summary>More screenshots</summary>
 
-</div>
+| Desktop | Mobile |
+|---|---|
+| ![desktop](public/screenshots/desktop-1.png) | ![mobile](public/screenshots/mobile-1.png) |
 
-| Feature | Description | Status |
-|---------|-------------|--------|
-| 💰 **Money Management** | Track transactions, manage budgets, and visualize net worth with real-time charts | ✅ |
-| 🎯 **Habit Tracking** | Build streaks, visualize progress with heatmaps, and stay accountable | ✅ |
-| ❤️ **Health Metrics** | Log weight, sleep, mood, heart rate, and more with interactive charts | ✅ |
-| 🎪 **Goal Progress** | Set and track goals across Finance, Health, Habits, and custom categories | ✅ |
-| 📔 **Journal Entries** | Write reflections with mood tracking and "On This Day" nostalgia | ✅ |
-| 🤖 **AI Assistant** | Get personalized insights, log data via natural conversation | ✅ |
-| 🌙 **Dark Mode** | Eye-friendly interface for any time of day | ✅ |
-| ♿ **Accessibility** | WCAG AA compliant with keyboard navigation and screen reader support | ✅ |
-| 📱 **Mobile Responsive** | Seamless experience on phones, tablets, and desktops | ✅ |
-| ⌨️ **Keyboard Navigation** | Full keyboard support with visible focus indicators | ✅ |
+</details>
 
 ---
 
-## 📊 Dashboard Preview
+## Features
 
-<div align="center">
-
-### Real-time Overview at a Glance
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│  📊 Dashboard                                               │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  💵 Net Worth: ₹45,000  📉 Today's Expenses: ₹500         │
-│  🔥 Habit Completion: 100%  ❤️ Health Metrics: 5 tracked  │
-│                                                             │
-│  ┌──────────────────────┐  ┌──────────────────────┐       │
-│  │ Expense Chart (7d)   │  │ Budget Alert         │       │
-│  │ ▆ ▆▆ ▆ ▆ ▆▆ ▆▆      │  │ Food: 60% • ₹3000   │       │
-│  └──────────────────────┘  └──────────────────────┘       │
-│                                                             │
-│  📈 Goals   💪 Health Metrics   🎯 Quick Actions           │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
-```
-
-</div>
+| Feature | Description |
+|---|---|
+| 🧭 Unified Dashboard | Integrates finances, habits, health, goals, journal and assistant in one place. |
+| 💸 Money Tracking | Accounts, budgets, transactions and net worth charts. |
+| ✅ Habits & Goals | Streaks, heatmaps, and goal progress tracking. |
+| 📈 Health Metrics | Track weight, sleep, heart rate and trends over time. |
+| ✍️ Journal | Private entries with mood tracking. |
+| 🤖 Assistant Chat | Natural conversation to log data and get insights. |
 
 ---
 
-## 🏗️ Tech Stack
+## Tech Stack
 
-<div align="center">
-
-### Modern, Scalable, Developer-Friendly
-
-</div>
-
-### Frontend & Framework
-```
-Next.js 16.2.6  │  React 19  │  TypeScript 5.0  │  Tailwind CSS 4.3.0
-```
-
-### UI Components & Visualization
-```
-Lucide React  │  Recharts  │  Radix UI  │  clsx  │  react-hot-toast
-```
-
-### Backend & Database
-```
-Prisma ORM  │  SQLite  │  Next.js API Routes
-```
-
-### AI & Integrations
-```
-Groq API (LLM)  │  OpenAI Compatible  │  Streaming Responses
-```
-
-### Development Tools
-```
-Turbopack  │  ESLint  │  TypeScript  │  Tailwind IntelliSense
-```
-
-### DevOps & Deployment
-```
-Vercel  │  GitHub  │  Environment Variables  │  ISR & SSG
-```
+Front-end: ![Next.js](https://img.shields.io/badge/Next.js-000000?style=flat-square&logo=next.js) `Next.js (App Router)`, `React`, `TypeScript`  
+Styling: ![Tailwind](https://img.shields.io/badge/Tailwind-06B6D4?style=flat-square&logo=tailwindcss) `Tailwind CSS`  
+Database: ![Prisma](https://img.shields.io/badge/Prisma-2D3748?style=flat-square&logo=prisma) `Prisma` + `SQLite`  
+Charts & UI: `Recharts` / `Chart.js`, `Radix UI`, `Lucide`  
+Dev & CI: `pnpm` / `npm`, `Turbopack`, `ESLint`, `GitHub Actions`  
 
 ---
 
-## 🔄 Architecture & Data Flow
-
-### System Architecture
-
-```mermaid
-graph TB
-	Client["🌐 Client<br/>(Next.js + React)"]
-	API["⚙️ API Routes<br/>(Next.js Server)"]
-	Prisma["🗄️ Prisma ORM"]
-	SQLite["💾 SQLite DB"]
-	AI["🤖 AI Engine<br/>(Groq API)"]
-    
-	Client -->|HTTP Requests| API
-	API -->|Query/Mutation| Prisma
-	Prisma -->|SQL| SQLite
-	API -->|Streaming| AI
-	AI -->|Stream Response| Client
-    
-	Client -.->|Form Submission| API
-	Client -.->|Real-time Update| Client
-    
-	style Client fill:#4f46e5,stroke:#333,stroke-width:2px,color:#fff
-	style API fill:#06b6d4,stroke:#333,stroke-width:2px,color:#fff
-	style Prisma fill:#10b981,stroke:#333,stroke-width:2px,color:#fff
-	style SQLite fill:#f59e0b,stroke:#333,stroke-width:2px,color:#fff
-	style AI fill:#ec4899,stroke:#333,stroke-width:2px,color:#fff
-```
-
-### User Journey
+## Architecture & Workflow
 
 ```mermaid
 flowchart LR
-	A["📱 User<br/>Visits App"] --> B["🔐 Authentication<br/>(Next.js Auth)"]
-	B --> C["📊 Dashboard<br/>Loads Data"]
-	C --> D{"User<br/>Action?"}
-	D -->|Add Transaction| E["💳 Money Page"]
-	D -->|Track Habit| F["🎯 Habit Page"]
-	D -->|Log Health| G["❤️ Health Page"]
-	D -->|Chat with AI| H["🤖 AI Assistant"]
-	E --> I["✅ Success Toast"]
-	F --> I
-	G --> I
-	H --> I
-	I --> C
-    
-	style A fill:#4f46e5,stroke:#333,stroke-width:2px,color:#fff
-	style B fill:#06b6d4,stroke:#333,stroke-width:2px,color:#fff
-	style C fill:#10b981,stroke:#333,stroke-width:2px,color:#fff
-	style D fill:#f59e0b,stroke:#333,stroke-width:2px,color:#fff
-	style E fill:#ec4899,stroke:#333,stroke-width:2px,color:#fff
-	style F fill:#ec4899,stroke:#333,stroke-width:2px,color:#fff
-	style G fill:#ec4899,stroke:#333,stroke-width:2px,color:#fff
-	style H fill:#ec4899,stroke:#333,stroke-width:2px,color:#fff
-	style I fill:#10b981,stroke:#333,stroke-width:2px,color:#fff
-```
-
-### Database Schema (Simplified)
-
-```mermaid
-erDiagram
-	USER ||--o{ ACCOUNT : has
-	USER ||--o{ TRANSACTION : has
-	ACCOUNT ||--o{ TRANSACTION : contains
-	USER ||--o{ HABIT : tracks
-	HABIT ||--o{ HABITLOG : logs
-	USER ||--o{ HEALTHMETRIC : logs
-	USER ||--o{ JOURNALENTRY : writes
-	USER ||--o{ GOAL : sets
-	USER ||--o{ BUDGET : manages
-	TRANSACTION ||--o{ BUDGET : affects
-    
-	USER {
-		int id PK
-		string name
-		string email
-	}
-    
-	ACCOUNT {
-		int id PK
-		int userId FK
-		string name
-		decimal balance
-	}
-    
-	TRANSACTION {
-		int id PK
-		int accountId FK
-		string type
-		decimal amount
-		string category
-	}
-    
-	HABIT {
-		int id PK
-		int userId FK
-		string name
-		string frequency
-	}
-    
-	HEALTHMETRIC {
-		int id PK
-		int userId FK
-		string type
-		decimal value
-	}
-    
-	JOURNALENTRY {
-		int id PK
-		int userId FK
-		string title
-		text content
-	}
-    
-	GOAL {
-		int id PK
-		int userId FK
-		string title
-		decimal targetValue
-	}
+  Browser -->|SSR| NextApp[Next.js App Router]
+  NextApp --> API[API Routes]
+  API --> Prisma[(Prisma / SQLite DB)]
+  NextApp --> Charts[Client Chart Components]
+  Charts --> Browser
 ```
 
 ---
 
-## 🚀 Quick Start
-
-### Prerequisites
-
-- **Node.js** 18.0 or later
-- **npm** or **pnpm** or **yarn**
-- **.env.local** file with API keys
-
-### Installation
-
-#### 1️⃣ Clone the Repository
+## Installation
 
 ```bash
-git clone https://github.com/yourusername/lifeos.git
-cd lifeos
-```
-
-#### 2️⃣ Install Dependencies
-
-```bash
-npm install
-```
-
-#### 3️⃣ Setup Environment Variables
-
-Create a `.env.local` file in the root directory:
-
-```env
-# Database
-DATABASE_URL="file:./prisma/dev.db"
-
-# AI API (Groq)
-GROQ_API_KEY="your_groq_api_key_here"
-
-# Optional: For production deployment
-NODE_ENV=development
-```
-
-#### 4️⃣ Initialize Database
-
-```bash
-npx prisma migrate dev
-```
-
-#### 5️⃣ Start Development Server
-
-```bash
+git clone https://github.com/adirane45/LifeOS.git
+cd LifeOS
+pnpm install # or npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+On Windows, if you previously had PowerShell profile warnings, run the dev server with:
 
----
-
-## 📁 Project Structure
-
-```
-lifeos/
-├── app/                          # Next.js app directory
-│   ├── api/                      # API routes
-│   │   ├── assistant/            # AI assistant endpoint
-│   │   ├── habits/[habitId]/     # Habit toggle API
-│   │   ├── export/               # Data export endpoints
-│   │   └── cron/                 # Scheduled jobs
-│   ├── (pages)/                  # Main application pages
-│   │   ├── page.tsx              # Dashboard
-│   │   ├── money/                # Money management
-│   │   ├── habits/               # Habit tracking
-│   │   ├── health/               # Health metrics
-│   │   ├── journal/              # Journal entries
-│   │   ├── goals/                # Goal tracking
-│   │   ├── assistant/            # AI chat
-│   │   ├── settings/             # User settings
-│   │   └── auth/                 # Authentication
-│   ├── layout.tsx                # Root layout
-│   └── globals.css               # Global styles
-│
-├── components/                   # Reusable React components
-│   ├── ui/                       # Base UI components
-│   │   ├── Button.tsx
-│   │   ├── Card.tsx
-│   │   └── ...
-│   ├── Header.tsx
-│   ├── Sidebar.tsx
-│   ├── HabitCheckbox.tsx
-│   └── ...
-│
-├── lib/                          # Utility functions
-│   ├── prisma.ts                 # Prisma client
-│   ├── data.ts                   # Data fetching
-│   ├── habitHelpers.ts           # Habit logic
-│   ├── accountHelpers.ts         # Account logic
-│   ├── assistantTools.ts         # AI tools
-│   └── ...
-│
-├── prisma/                       # Database schema
-│   ├── schema.prisma
-│   ├── migrations/
-│   └── dev.db
-│
-├── styles/                       # Global styles
-│   └── globals.css
-│
-├── public/                       # Static assets
-│   └── ...
-│
-├── package.json
-├── tsconfig.json
-├── next.config.js
-├── tailwind.config.ts
-├── prisma.config.ts
-└── README.md
+```powershell
+cmd /c npm run dev
 ```
 
 ---
 
-## 🎮 Usage Guide
+## Contributing
 
-### 💰 Money Management
+Contributions welcome — open issues and PRs. Please follow the contribution guidelines and run `pnpm lint` and tests before opening a PR.
 
-1. Navigate to **Money** → **Accounts**
-2. Add your bank accounts/investment accounts
-3. Go to **Transactions** to log income/expenses
-4. Set monthly budgets in **Budgets**
-5. View real-time net worth on the dashboard
+---
 
-### 🎯 Habit Tracking
+## License
 
-1. Navigate to **Habits**
-2. Create habits with DAILY or WEEKLY frequency
-3. Check off habits daily to build streaks
-4. View heatmap visualization for monthly progress
-5. Get AI insights on your consistency
+MIT © Adriane
 
-### ❤️ Health Logging
-
-1. Navigate to **Health**
-2. Log metrics (weight, sleep, mood, heart rate, etc.)
-3. View combined charts and trends
-4. Set health goals and track progress
-5. Export health data for professional review
 
 ### 🎪 Goal Tracking
 
