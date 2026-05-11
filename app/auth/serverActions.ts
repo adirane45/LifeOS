@@ -18,7 +18,7 @@ export async function login(passwordOrForm: string | FormData) {
   }
 
   if (password !== expected) {
-    return { error: 'Wrong password' };
+    throw new Error('Wrong password');
   }
 
   // Generate a simple session token (no DB); presence of cookie implies authenticated

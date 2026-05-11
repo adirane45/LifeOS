@@ -2,6 +2,7 @@ import { prisma } from '../../../lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { Wallet } from 'lucide-react';
 import EmptyState from '../../../components/EmptyState';
+import ConfirmDeleteForm from '../../../components/ConfirmDeleteForm';
 
 export const dynamic = 'force-dynamic';
 
@@ -85,10 +86,14 @@ export default async function AccountsPage() {
                       <div className="text-xs text-gray-500">{a.type} • {a.currency}</div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <form action={deleteAccount} method="post">
-                        <input type="hidden" name="id" value={String(a.id)} />
-                        <button type="submit" className="text-sm text-rose-600">Delete</button>
-                      </form>
+                      <ConfirmDeleteForm
+                        action={deleteAccount}
+                        itemId={a.id}
+                        title="Delete account?"
+                        message={`Deleting ${a.name} will also delete all of its transactions. This cannot be undone.`}
+                        confirmLabel="Delete account"
+                        triggerLabel="Delete"
+                      />
                     </div>
                   </li>
                 ))}

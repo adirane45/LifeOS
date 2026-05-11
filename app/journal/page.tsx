@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { BookOpen } from 'lucide-react';
 import JournalEntryItem from '../../components/JournalEntryItem';
 import EmptyState from '../../components/EmptyState';
+import ConfirmDeleteForm from '../../components/ConfirmDeleteForm';
 
 export const dynamic = 'force-dynamic';
 
@@ -97,10 +98,14 @@ export default async function JournalPage() {
                       entry={entry}
                       onUpdate={updateEntry}
                     />
-                    <form action={deleteEntry} style={{ display: 'inline' }}>
-                      <input type="hidden" name="id" value={String(entry.id)} />
-                      <button type="submit" className="text-sm text-rose-600">Delete</button>
-                    </form>
+                    <ConfirmDeleteForm
+                      action={deleteEntry}
+                      itemId={entry.id}
+                      title="Delete journal entry?"
+                      message="Deleting this journal entry will permanently remove it. This cannot be undone."
+                      confirmLabel="Delete entry"
+                      triggerLabel="Delete"
+                    />
                   </div>
                 ))
               )}

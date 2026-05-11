@@ -64,6 +64,10 @@ model Transaction {
   category    String
   description String?
   date        DateTime
+  isRecurring Boolean         @default(false)
+  recurrenceRule String?
+  recurrenceEndDate DateTime?
+  parentTransactionId Int?
   type        TransactionType
   account     Account         @relation(fields: [accountId], references: [id])
 }

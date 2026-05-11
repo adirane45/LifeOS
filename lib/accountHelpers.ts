@@ -14,6 +14,10 @@ export async function createTransactionAndUpdateBalance(data: {
   description?: string | null;
   date: Date;
   type: TransactionType;
+  isRecurring?: boolean;
+  recurrenceRule?: string | null;
+  recurrenceEndDate?: Date | null;
+  parentTransactionId?: number | null;
 }) {
   const signed = toSignedAmount(data.amount, data.type);
 
@@ -25,7 +29,11 @@ export async function createTransactionAndUpdateBalance(data: {
         category: data.category,
         description: data.description,
         date: data.date,
-        type: data.type
+        type: data.type,
+        isRecurring: data.isRecurring ?? false,
+        recurrenceRule: data.recurrenceRule ?? null,
+        recurrenceEndDate: data.recurrenceEndDate ?? null,
+        parentTransactionId: data.parentTransactionId ?? null
       }
     });
 
