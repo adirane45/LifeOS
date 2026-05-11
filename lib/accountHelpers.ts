@@ -21,7 +21,7 @@ export async function createTransactionAndUpdateBalance(data: {
 }) {
   const signed = toSignedAmount(data.amount, data.type);
 
-  return prisma.$transaction(async (tx) => {
+  return prisma.$transaction(async (tx: any) => {
     const created = await tx.transaction.create({
       data: {
         accountId: data.accountId,
@@ -47,7 +47,7 @@ export async function createTransactionAndUpdateBalance(data: {
 }
 
 export async function deleteTransactionAndRevertBalance(transactionId: number) {
-  return prisma.$transaction(async (tx) => {
+  return prisma.$transaction(async (tx: any) => {
     const transaction = await tx.transaction.findUnique({ where: { id: transactionId } });
     if (!transaction) return null;
 
@@ -64,7 +64,7 @@ export async function deleteTransactionAndRevertBalance(transactionId: number) {
 }
 
 export async function recalculateAccountBalance(accountId: number) {
-  return prisma.$transaction(async (tx) => {
+  return prisma.$transaction(async (tx: any) => {
     const transactions = await tx.transaction.findMany({
       where: { accountId },
       select: { amount: true, type: true }
@@ -83,7 +83,7 @@ export async function recalculateAccountBalance(accountId: number) {
 }
 
 export async function recalculateAllAccountBalances() {
-  return prisma.$transaction(async (tx) => {
+  return prisma.$transaction(async (tx: any) => {
     const accounts = await tx.account.findMany({ select: { id: true, name: true } });
     const updatedBalances: Array<{ id: number; name: string; balance: number }> = [];
 

@@ -2,6 +2,7 @@
 
 import { useOptimistic, useTransition } from 'react';
 import { Check } from 'lucide-react';
+import Button from './ui/Button';
 
 export default function HabitCheckbox({ habitId, initialCompleted }: { habitId: number; initialCompleted: boolean }) {
   const [isCompletedOptimistic, setIsCompletedOptimistic] = useOptimistic(initialCompleted);
@@ -28,16 +29,16 @@ export default function HabitCheckbox({ habitId, initialCompleted }: { habitId: 
   };
 
   return (
-    <button
+    <Button
       onClick={toggleCompletion}
       disabled={isPending}
-      className={`inline-flex h-6 w-6 items-center justify-center rounded border-2 transition ${
-        isCompletedOptimistic
-          ? 'border-green-500 bg-green-50'
-          : 'border-gray-300 bg-white hover:border-green-400'
+      variant="ghost"
+      size="sm"
+      className={`h-6 w-6 p-0 inline-flex items-center justify-center rounded-full border-2 ${
+        isCompletedOptimistic ? 'border-success bg-success/10' : 'border-gray-300 bg-white hover:border-success'
       }`}
     >
-      {isCompletedOptimistic && <Check className="h-4 w-4 text-green-600" />}
-    </button>
+      {isCompletedOptimistic && <Check className="h-4 w-4 text-success" />}
+    </Button>
   );
 }

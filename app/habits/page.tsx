@@ -6,8 +6,11 @@ import { revalidatePath } from 'next/cache';
 import HabitCheckbox from '../../components/HabitCheckbox';
 import HabitHeatmap from '../../components/HabitHeatmap';
 import EmptyState from '../../components/EmptyState';
+import Button from '../../components/ui/Button';
+import Card from '../../components/ui/Card';
+import { getHabits } from '../../lib/data';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 function startOfDay(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -21,10 +24,7 @@ export default async function HabitsPage({ searchParams }: { searchParams: Promi
   // Example: ?tzOffset=-300 for EST (UTC-5)
   const timezoneOffsetMinutes = params.tzOffset ? parseInt(params.tzOffset, 10) : undefined;
 
-  const habits = await prisma.habit.findMany({
-    where: { userId },
-    orderBy: { name: 'asc' }
-  });
+  const habits = await getHabits(userId);
 
   const habitsWithStreaks = await Promise.all(
     habits.map(async (h: any) => {
@@ -59,16 +59,17 @@ export default async function HabitsPage({ searchParams }: { searchParams: Promi
   }
 
   return (
-    <section className="space-y-6">
+    <section className="space-y-6 p-4">
       <div>
-        <h2 className="text-2xl font-semibold">Habits</h2>
+        <h2 className="text-2xl font-bold">Habits</h2>
         <p className="text-sm text-gray-500">Track your daily and weekly habits.</p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        <div className="rounded-2xl border border-gray-200 bg-white p-4">
-          <h3 className="text-lg font-medium">Add habit</h3>
-          <form id="add-habit" action={addHabit} className="mt-4 space-y-3">
+        <Card className="p-0">
+          <div className="p-4">
+            <h3 className="text-lg font-semibold">Add habit</h3>
+            <form id="add-habit" action={addHabit} className="mt-4 space-y-3">
             <div>
               <label className="text-sm">Name</label>
               <input name="name" placeholder="e.g., Exercise" className="mt-1 w-full rounded border px-3 py-2" />
@@ -85,14 +86,16 @@ export default async function HabitsPage({ searchParams }: { searchParams: Promi
               <input name="targetCount" type="number" defaultValue="1" className="mt-1 w-full rounded border px-3 py-2" />
             </div>
             <div>
-              <button type="submit" className="rounded bg-blue-600 px-4 py-2 text-white">Add</button>
+              <Button type="submit" variant="primary">Add</Button>
             </div>
           </form>
-        </div>
+          </div>
+        </Card>
 
-        <div className="rounded-2xl border border-gray-200 bg-white p-4">
-          <h3 className="text-lg font-medium">Today's habits</h3>
-          <ul className="mt-4 space-y-3">
+        <Card className="p-0">
+          <div className="p-4">
+            <h3 className="text-lg font-semibold">Today's habits</h3>
+            <ul className="mt-4 space-y-3">
             {habitsWithStreaks.length === 0 ? (
               <EmptyState icon={<ListChecks />} title="No habits tracked yet." description="Create your first habit to start tracking." actionLabel="Add habit" actionHref="#add-habit" />
             ) : (
@@ -111,12 +114,13 @@ export default async function HabitsPage({ searchParams }: { searchParams: Promi
               ))
             )}
           </ul>
-        </div>
+          </div>
+        </Card>
       </div>
 
       {habitsWithStreaks.length > 0 && (
         <div className="rounded-2xl border border-gray-200 bg-white p-4">
-          <h3 className="text-lg font-medium">Habit heatmap</h3>
+          <h3 className="text-lg font-semibold">Habit heatmap</h3>
           <p className="text-sm text-gray-500">View completion heatmap for a habit.</p>
           <div className="mt-4 grid gap-6 md:grid-cols-[auto_1fr]">
             <div className="min-w-fit">
@@ -124,16 +128,9 @@ export default async function HabitsPage({ searchParams }: { searchParams: Promi
               <ul className="space-y-2">
                 {habitsWithStreaks.map((h: any) => (
                   <li key={h.id}>
-                    <Link
-                      href={`/habits?habitId=${h.id}`}
-                      className={`text-sm px-3 py-1 rounded ${
-                        heatmapHabit?.id === h.id
-                          ? 'bg-blue-100 text-blue-900 font-medium'
-                          : 'text-blue-600 hover:bg-gray-100'
-                      }`}
-                    >
-                      {h.name}
-                    </Link>
+                        <Button href={`/habits?habitId=${h.id}`} variant={heatmapHabit?.id === h.id ? 'secondary' : 'ghost'} size="sm" className={`text-sm px-3 py-1 rounded ${heatmapHabit?.id === h.id ? 'bg-primary/10 text-primary font-medium' : 'text-primary hover:bg-gray-100'}`}>
+                          {h.name}
+                        </Button>
                   </li>
                 ))}
               </ul>

@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react';
 import ConfirmDialog from './ConfirmDialog';
+import Button from './ui/Button';
 
 type Variant = 'danger' | 'warning';
 
@@ -39,9 +40,9 @@ export default function ConfirmDeleteForm({
   return (
     <form ref={formRef} action={action} className="inline-flex">
       <input type="hidden" name={inputName} value={String(itemId)} />
-      <button type="button" onClick={() => setIsOpen(true)} className={triggerClassName}>
+      <Button type="button" onClick={() => setIsOpen(true)} variant="ghost" className={triggerClassName}>
         {triggerLabel}
-      </button>
+      </Button>
       <ConfirmDialog
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}

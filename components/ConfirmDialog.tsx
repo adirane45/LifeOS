@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { AlertTriangle } from 'lucide-react';
+import Button from './ui/Button';
 
 type Variant = 'danger' | 'warning';
 
@@ -96,8 +97,8 @@ export default function ConfirmDialog({
 
   const confirmButtonClasses =
     variant === 'warning'
-      ? 'bg-amber-500 text-white hover:bg-amber-600 focus-visible:ring-amber-500'
-      : 'bg-rose-600 text-white hover:bg-rose-700 focus-visible:ring-rose-600';
+      ? 'bg-warning text-white hover:brightness-95 focus-visible:ring-warning'
+      : 'bg-danger text-white hover:brightness-95 focus-visible:ring-danger';
 
   const iconStyles =
     variant === 'warning'
@@ -137,21 +138,8 @@ export default function ConfirmDialog({
         </div>
 
         <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <button
-            ref={cancelButtonRef}
-            type="button"
-            onClick={onClose}
-            className="inline-flex justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={onConfirm}
-            className={`inline-flex justify-center rounded-lg px-4 py-2 text-sm font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-gray-900 ${confirmButtonClasses}`}
-          >
-            {confirmLabel}
-          </button>
+          <Button ref={cancelButtonRef} type="button" onClick={onClose} variant="secondary" className="inline-flex justify-center">Cancel</Button>
+          <Button type="button" onClick={onConfirm} variant={variant === 'warning' ? 'secondary' : 'danger'} className={`inline-flex justify-center ${variant === 'warning' ? 'bg-warning text-white' : ''}`}>{confirmLabel}</Button>
         </div>
       </div>
     </div>

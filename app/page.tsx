@@ -1,10 +1,11 @@
 import Link from 'next/link';
 import { Wallet, PlusCircle, TrendingUp, HeartPulse, Target, CircleDollarSign, Activity, Circle, TrendingDown } from 'lucide-react';
 import { prisma } from '../lib/prisma';
-import ExpensesMiniChart from '../components/ExpensesMiniChart';
+import { getAccounts, getGoals, getHealthMetrics, getHabits, getTransactions, getUser } from '../lib/data';
 import ChartErrorBoundary from '../components/ChartErrorBoundary';
+import ExpensesMiniChart from '../components/ExpensesMiniChartClient';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 type LatestMetric = {
   type: string;
@@ -93,11 +94,7 @@ function nextMonthStart(date: Date) {
 
 export default async function Page() {
   // Fetch or create user (critical for dashboard to work)
-  let user = await prisma.user.findFirst({
-    include: {
-      accounts: true
-    }
-  });
+  let user = await getUser();
 
   if (!user) {
     user = await prisma.user.create({
@@ -105,9 +102,7 @@ export default async function Page() {
         name: 'Me',
         email: 'me@lifeos.local'
       },
-      include: {
-        accounts: true
-      }
+      select: { id: true, name: true, email: true }
     });
   }
 
@@ -120,105 +115,79 @@ export default async function Page() {
   const todayStart = startOfDay(now);
   const tomorrowStart = new Date(todayStart);
   tomorrowStart.setDate(tomorrowStart.getDate() + 1);
-  const sevenDaysAgo = new Date(todayStart);
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+  const thirtyDaysAgo = new Date(todayStart);
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
   const thisMonthStart = monthStart(now);
   const thisMonthEnd = nextMonthStart(thisMonthStart);
 
-  // Fetch all dashboard data in parallel with proper error handling
-  const [netWorth, totalTransactionCount, todayExpenses, todayCompletedLogs, todayHabitLogs, habitsTotal, recentMetrics, expenseTransactions, activeGoals, monthBudgets, monthExpenseTransactions] =
-    await Promise.all([
-      prisma.account.aggregate({
-        where: { userId: user.id },
-        _sum: { balance: true }
-      }).catch(() => ({ _sum: { balance: null } })),
-      prisma.transaction.count({
-        where: {
-          account: { userId: user.id }
+  const [
+    accounts,
+    totalTransactionCount,
+    todayExpenses,
+    todayCompletedLogs,
+    todayHabitLogs,
+    habits,
+    recentMetrics,
+    expenseTransactions,
+    activeGoals,
+    monthBudgets,
+    monthExpenseTransactions
+  ] = await Promise.all([
+    getAccounts(user.id),
+    prisma.transaction.count({ where: { account: { userId: user.id } } }).catch(() => 0),
+    prisma.transaction.aggregate({
+      where: {
+        account: { userId: user.id },
+        type: 'EXPENSE',
+        date: {
+          gte: todayStart,
+          lt: tomorrowStart
         }
-      }).catch(() => 0),
-      prisma.transaction.aggregate({
-        where: {
-          account: { userId: user.id },
-          type: 'EXPENSE',
-          date: {
-            gte: todayStart,
-            lt: tomorrowStart
-          }
-        },
-        _sum: { amount: true }
-      }).catch(() => ({ _sum: { amount: null } })),
-      prisma.habitLog.count({
-        where: {
-          habit: { userId: user.id },
-          completed: true,
-          date: {
-            gte: todayStart,
-            lt: tomorrowStart
-          }
+      },
+      _sum: { amount: true }
+    }).catch(() => ({ _sum: { amount: null } })),
+    prisma.habitLog.count({
+      where: {
+        habit: { userId: user.id },
+        completed: true,
+        date: {
+          gte: todayStart,
+          lt: tomorrowStart
         }
-      }).catch(() => 0),
-      prisma.habitLog.count({
-        where: {
-          habit: { userId: user.id },
-          date: {
-            gte: todayStart,
-            lt: tomorrowStart
-          }
+      }
+    }).catch(() => 0),
+    prisma.habitLog.count({
+      where: {
+        habit: { userId: user.id },
+        date: {
+          gte: todayStart,
+          lt: tomorrowStart
         }
-      }).catch(() => 0),
-      prisma.habit.count({
-        where: { userId: user.id }
-      }).catch(() => 0),
-      prisma.healthMetric.findMany({
-        where: { userId: user.id },
-        orderBy: { date: 'desc' }
-      }).catch(() => []),
-      prisma.transaction.findMany({
-        where: {
-          account: { userId: user.id },
-          type: 'EXPENSE',
-          date: {
-            gte: sevenDaysAgo,
-            lt: tomorrowStart
-          }
-        },
-        orderBy: { date: 'asc' },
-        select: { amount: true, date: true }
-      }).catch(() => []),
-      prisma.goal.findMany({
-        where: {
-          userId: user.id,
-          completed: false
-        },
-        orderBy: [{ targetDate: 'asc' }, { id: 'desc' }]
-      }).catch(() => []),
-      prisma.budget.findMany({
-        where: {
-          userId: user.id,
-          month: {
-            gte: thisMonthStart,
-            lt: thisMonthEnd
-          }
-        },
-        orderBy: { category: 'asc' }
-      }).catch(() => []),
-      prisma.transaction.findMany({
-        where: {
-          account: { userId: user.id },
-          type: 'EXPENSE',
-          date: { gte: thisMonthStart, lt: thisMonthEnd }
-        },
-        select: { category: true, amount: true }
-      }).catch(() => [])
-    ]);
+      }
+    }).catch(() => 0),
+    getHabits(user.id),
+    getHealthMetrics(user.id, 50),
+    getTransactions(user.id, 120, 'asc', `EXPENSE||${thirtyDaysAgo.toISOString()}|${tomorrowStart.toISOString()}||0`).catch(() => []),
+    getGoals(user.id, 50),
+    prisma.budget.findMany({
+      where: {
+        userId: user.id,
+        month: {
+          gte: thisMonthStart,
+          lt: thisMonthEnd
+        }
+      },
+      orderBy: { category: 'asc' }
+    }).catch(() => []),
+    getTransactions(user.id, 200, 'asc', `EXPENSE||${thisMonthStart.toISOString()}|${thisMonthEnd.toISOString()}||0`).catch(() => [])
+  ]);
 
-  // Build expense chart data safely
+  // Build expense chart data safely (last 30 days)
   const safeExpenseTransactions = Array.isArray(expenseTransactions) ? expenseTransactions : [];
   const dailyExpenseMap = new Map<string, number>();
-  for (let offset = 0; offset < 7; offset += 1) {
-    const date = new Date(sevenDaysAgo);
-    date.setDate(sevenDaysAgo.getDate() + offset);
+  for (let offset = 0; offset < 30; offset += 1) {
+    const date = new Date(thirtyDaysAgo);
+    date.setDate(thirtyDaysAgo.getDate() + offset);
     dailyExpenseMap.set(localDateKey(date), 0);
   }
 
@@ -230,7 +199,7 @@ export default async function Page() {
   }
 
   const expenseChartData = Array.from(dailyExpenseMap.entries()).map(([date, amount]) => ({
-    date: formatDayLabel(new Date(`${date}T00:00:00`)),
+    date: new Date(`${date}T00:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
     amount
   }));
 
@@ -244,12 +213,12 @@ export default async function Page() {
   }
 
   // Calculate dashboard values safely
-  const netWorthValue = netWorth?._sum?.balance ?? 0;
+  const netWorthValue = accounts?.reduce((sum: number, acc: any) => sum + Number(acc.balance ?? 0), 0) ?? 0;
   const todayExpenseValue = todayExpenses?._sum?.amount ?? 0;
-  const safeHabitsTotal = Math.max(0, habitsTotal ?? 0);
+  const safeHabitsTotal = Math.max(0, habits?.length ?? 0);
   const safeTodayCompletedLogs = Math.max(0, todayCompletedLogs ?? 0);
   const habitCompletionRate = safeHabitsTotal === 0 ? 0 : Math.round((safeTodayCompletedLogs / safeHabitsTotal) * 100);
-  const safeAccounts = Array.isArray(user?.accounts) ? user.accounts : [];
+  const safeAccounts = Array.isArray(accounts) ? accounts : [];
   const currency = safeAccounts[0]?.currency ?? 'USD';
 
   const stats = [
@@ -286,7 +255,7 @@ export default async function Page() {
     { label: 'Manage goals', href: '/goals', icon: Target }
   ];
 
-  const safeActiveGoals = Array.isArray(activeGoals) ? activeGoals : [];
+  const safeActiveGoals = Array.isArray(activeGoals) ? activeGoals.filter((goal) => !goal.completed) : [];
   const safeMonthBudgets = Array.isArray(monthBudgets) ? monthBudgets : [];
   const safeMonthExpenses = Array.isArray(monthExpenseTransactions) ? monthExpenseTransactions : [];
 
@@ -317,24 +286,24 @@ export default async function Page() {
   if (safeAccounts.length === 0 && totalTransactionCount === 0 && safeHabitsTotal === 0 && safeRecentMetrics.length === 0 && safeActiveGoals.length === 0) {
     return (
       <section className="space-y-6">
-        <div className="rounded-2xl border border-gray-200 bg-white p-8 text-center shadow-sm">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gray-50 text-gray-400">
+        <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-8 text-center shadow-sm">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gray-50 dark:bg-gray-700 text-gray-400 dark:text-gray-500">
             <PlusCircle className="h-8 w-8" />
           </div>
-          <h2 className="mt-5 text-2xl font-semibold text-gray-900">👋 Welcome to LifeOS! Start by adding an account, a habit, or a health metric.</h2>
-          <p className="mt-2 text-sm text-gray-500">Use the quick actions below to get your dashboard moving.</p>
+          <h2 className="mt-5 text-2xl font-semibold text-gray-900 dark:text-gray-100">👋 Welcome to LifeOS! Start by adding an account, a habit, or a health metric.</h2>
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Use the quick actions below to get your dashboard moving.</p>
           <div className="mt-6 grid gap-3 md:grid-cols-3">
             {quickLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-medium text-gray-800 transition hover:bg-gray-100"
+                className="flex items-center justify-between rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 px-4 py-3 text-sm font-medium text-gray-800 dark:text-gray-100 transition hover:bg-gray-100 dark:hover:bg-gray-600"
               >
                 <span className="flex items-center gap-3">
-                  <link.icon className="h-4 w-4 text-gray-500" />
+                  <link.icon className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                   {link.label}
                 </span>
-                <PlusCircle className="h-4 w-4 text-gray-400" />
+                <PlusCircle className="h-4 w-4 text-gray-400 dark:text-gray-500" />
               </Link>
             ))}
           </div>
@@ -346,33 +315,33 @@ export default async function Page() {
   return (
     <section className="space-y-6">
       <div>
-        <p className="text-sm uppercase tracking-[0.2em] text-gray-500">Dashboard</p>
-        <h2 className="mt-2 text-3xl font-semibold text-gray-900">Welcome back, {user?.name ?? 'User'}</h2>
-        <p className="mt-2 text-gray-600">Here is your LifeOS summary for today.</p>
+        <p className="text-sm uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">Dashboard</p>
+        <h2 className="mt-2 text-3xl font-semibold text-gray-900 dark:text-gray-100">Welcome back, {user?.name ?? 'User'}</h2>
+        <p className="mt-2 text-gray-600 dark:text-gray-400">Here is your LifeOS summary for today.</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {stats.map((stat) => (
-          <div key={stat.label} className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+          <div key={stat.label} className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm">
             <div className={`inline-flex rounded-xl bg-gradient-to-br ${stat.accent} p-3 text-white`}>
               <stat.icon className="h-5 w-5" />
             </div>
-            <p className="mt-4 text-sm text-gray-500">{stat.label}</p>
-            <p className="mt-2 text-2xl font-semibold text-gray-900">{stat.value}</p>
+            <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">{stat.label}</p>
+            <p className="mt-2 text-2xl font-semibold text-gray-900 dark:text-gray-100">{stat.value}</p>
           </div>
         ))}
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.6fr_1fr]">
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+        <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900">Expenses last 7 days</h3>
-              <p className="text-sm text-gray-500">Grouped by day</p>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Expenses last 7 days</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Grouped by day</p>
             </div>
           </div>
           {safeExpenseTransactions.length === 0 ? (
-            <div className="flex h-[180px] flex-col items-center justify-center rounded-xl bg-gray-50 text-center text-sm text-gray-500">
+            <div className="flex h-[180px] flex-col items-center justify-center rounded-xl bg-gray-50 dark:bg-gray-700 text-center text-sm text-gray-500 dark:text-gray-400">
               <Wallet className="h-8 w-8 text-gray-300" />
               <p className="mt-3">No transactions yet.</p>
             </div>
@@ -384,9 +353,9 @@ export default async function Page() {
         </div>
 
         <div className="space-y-6">
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-            <h3 className="text-lg font-semibold text-gray-900">Quick add</h3>
-            <p className="mt-1 text-sm text-gray-500">Jump to the most common inputs.</p>
+          <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Quick add</h3>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Jump to the most common inputs.</p>
             <div className="mt-4 space-y-3">
               {quickLinks.map((link) => (
                 <Link
@@ -404,14 +373,14 @@ export default async function Page() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-            <h3 className="text-lg font-semibold text-gray-900">Budget alert</h3>
-            <p className="mt-1 text-sm text-gray-500">Most important monthly budget signal.</p>
+          <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Budget alert</h3>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Most important monthly budget signal.</p>
             <div className="mt-4">
               {!criticalBudget ? (
-                <div className="rounded-xl bg-gray-50 p-4 text-sm text-gray-600">
-                  Set a monthly budget to track your spending.{' '}
-                  <Link href="/money/budgets" className="text-blue-600 hover:text-blue-700">Open budgets</Link>
+              <div className="rounded-xl bg-gray-50 dark:bg-gray-700 p-4 text-sm text-gray-600 dark:text-gray-400">
+                Set a monthly budget to track your spending.{' '}
+                <Link href="/money/budgets" className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">Open budgets</Link>
                 </div>
               ) : criticalBudget.ratio > 1 ? (
                 <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
@@ -437,15 +406,15 @@ export default async function Page() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-2">
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-900">Goal progress</h3>
-          <p className="mt-1 text-sm text-gray-500">Track your active goals from here.</p>
+        <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Goal progress</h3>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Track your active goals from here.</p>
           <div className="mt-4 space-y-3">
             {safeActiveGoals.length === 0 ? (
-              <div className="flex h-[180px] flex-col items-center justify-center rounded-xl bg-gray-50 text-center text-sm text-gray-500">
-                <Target className="h-8 w-8 text-gray-300" />
+              <div className="flex h-[180px] flex-col items-center justify-center rounded-xl bg-gray-50 dark:bg-gray-700 text-center text-sm text-gray-500 dark:text-gray-400">
+                <Target className="h-8 w-8 text-gray-300 dark:text-gray-600" />
                 <p className="mt-3">Set a goal to track your progress.</p>
-                <Link href="/goals" className="mt-2 text-blue-600 hover:text-blue-700">Go to goals</Link>
+                <Link href="/goals" className="mt-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">Go to goals</Link>
               </div>
             ) : (
               safeActiveGoals.map((goal: any) => {
@@ -453,20 +422,20 @@ export default async function Page() {
                 const progress = getGoalProgress(goal);
                 const unit = goal.unit ? ` ${goal.unit}` : '';
                 return (
-                  <div key={goal.id} className="rounded-xl bg-gray-50 px-4 py-3">
+                  <div key={goal.id} className="rounded-xl bg-gray-50 dark:bg-gray-700 px-4 py-3">
                     <div className="mb-2 flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="rounded-md bg-white p-1 text-gray-600">
+                        <span className="rounded-md bg-white dark:bg-gray-600 p-1 text-gray-600 dark:text-gray-300">
                           <GoalIcon className="h-4 w-4" />
                         </span>
-                        <p className="text-sm font-medium text-gray-900">{goal.title}</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{goal.title}</p>
                       </div>
-                      <span className="text-xs text-gray-500">{goal.category}</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">{goal.category}</span>
                     </div>
-                    <div className="h-2 w-full rounded-full bg-gray-200">
+                    <div className="h-2 w-full rounded-full bg-gray-200 dark:bg-gray-600">
                       <div className={`h-2 rounded-full ${getGoalBarColor(goal.category)}`} style={{ width: `${progress}%` }} />
                     </div>
-                    <p className="mt-1 text-xs text-gray-500">
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                       {(goal.currentValue ?? 0).toFixed(2)}{unit} / {(goal.targetValue ?? 0).toFixed(2)}{unit}
                     </p>
                   </div>
@@ -476,25 +445,25 @@ export default async function Page() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-900">Latest health metrics</h3>
-          <p className="mt-1 text-sm text-gray-500">Most recent entry for each metric type.</p>
+        <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Latest health metrics</h3>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Most recent entry for each metric type.</p>
           <div className="mt-4 space-y-3">
             {latestMetricsMap.size === 0 ? (
-              <div className="flex h-[180px] flex-col items-center justify-center rounded-xl bg-gray-50 text-center text-sm text-gray-500">
-                <HeartPulse className="h-8 w-8 text-gray-300" />
+              <div className="flex h-[180px] flex-col items-center justify-center rounded-xl bg-gray-50 dark:bg-gray-700 text-center text-sm text-gray-500 dark:text-gray-400">
+                <HeartPulse className="h-8 w-8 text-gray-300 dark:text-gray-600" />
                 <p className="mt-3">No health metrics yet.</p>
               </div>
             ) : (
               Array.from(latestMetricsMap.values()).map((metric) => {
                 if (!metric?.type) return null;
                 return (
-                  <div key={metric.type} className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3">
+                  <div key={metric.type} className="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-gray-700 px-4 py-3">
                     <div>
-                      <p className="text-sm font-medium text-gray-900">{metric.type.replace('_', ' ').toLowerCase()}</p>
-                      <p className="text-xs text-gray-500">Updated {metric.date?.toLocaleDateString?.() ?? 'unknown'}</p>
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{metric.type.replace('_', ' ').toLowerCase()}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">Updated {metric.date?.toLocaleDateString?.() ?? 'unknown'}</p>
                     </div>
-                    <p className="text-sm font-semibold text-gray-900">{formatMetricValue(metric)}</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{formatMetricValue(metric)}</p>
                   </div>
                 );
               }).filter(Boolean)
@@ -502,14 +471,14 @@ export default async function Page() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-900">Today&apos;s habit completion</h3>
-          <p className="mt-1 text-sm text-gray-500">
+        <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Today&apos;s habit completion</h3>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             {todayHabitLogs === 0 ? 'No habit logs yet today.' : `${todayCompletedLogs} of ${todayHabitLogs} logs completed today.`}
           </p>
-          <div className="mt-4 rounded-xl bg-gray-50 px-4 py-6 text-center">
-            <div className="text-4xl font-semibold text-gray-900">{habitCompletionRate}%</div>
-            <p className="mt-2 text-sm text-gray-500">Completion rate across all habits</p>
+          <div className="mt-4 rounded-xl bg-gray-50 dark:bg-gray-700 px-4 py-6 text-center">
+            <div className="text-4xl font-semibold text-gray-900 dark:text-gray-100">{habitCompletionRate}%</div>
+            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Completion rate across all habits</p>
           </div>
         </div>
       </div>

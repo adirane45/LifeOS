@@ -2,8 +2,10 @@ import Link from 'next/link';
 import { ArrowDownRight, ArrowUpRight, PlusCircle, TrendingDown, Wallet } from 'lucide-react';
 import { prisma } from '../../lib/prisma';
 import EmptyState from '../../components/EmptyState';
+import { getAccounts, getTransactions, getUser } from '../../lib/data';
+import NetWorthChart from '../../components/NetWorthChartClient';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 function monthStart(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), 1);
@@ -18,12 +20,15 @@ export default async function MoneyPage() {
   const start = monthStart(now);
   const end = nextMonthStart(start);
 
-  const user = await prisma.user.findFirst();
+  let user = await getUser();
+  if (!user) {
+    user = await prisma.user.create({ data: { name: 'Me', email: 'me@lifeos.local' }, select: { id: true, name: true, email: true } });
+  }
   const userId = user?.id;
 
   const [accounts, recent, activeBudgets, monthExpenses] = await Promise.all([
-    prisma.account.findMany({ orderBy: { id: 'asc' } }),
-    prisma.transaction.findMany({ orderBy: { date: 'desc' }, take: 10, include: { account: true } }),
+    getAccounts(userId),
+    getTransactions(userId, 10, 'desc', '|||||1').catch(() => []),
     userId
       ? prisma.budget.findMany({
           where: {
@@ -37,14 +42,7 @@ export default async function MoneyPage() {
         })
       : Promise.resolve([]),
     userId
-      ? prisma.transaction.findMany({
-          where: {
-            account: { userId },
-            type: 'EXPENSE',
-            date: { gte: start, lt: end }
-          },
-          select: { category: true, amount: true }
-        })
+      ? getTransactions(userId, 200, 'asc', `EXPENSE|||${start.toISOString()}|${end.toISOString()}||0`).catch(() => [])
       : Promise.resolve([])
   ]);
 
@@ -82,14 +80,14 @@ export default async function MoneyPage() {
 
       <div className="rounded-2xl border border-gray-200 bg-white p-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-medium">Budget alerts</h3>
+          <h3 className="text-lg font-semibold">Budget alerts</h3>
           <Link href="/money/budgets" className="text-sm text-blue-600">Manage budgets</Link>
         </div>
         <div className="mt-4 space-y-3">
           {budgetAlerts.length === 0 ? (
             <div className="rounded-xl bg-gray-50 p-4 text-sm text-gray-600">Set a monthly budget to track your spending.</div>
           ) : (
-            budgetAlerts.map(({ budget, spent, percent, overspent, nearLimit }) => {
+            budgetAlerts.map(({ budget, spent, percent, overspent, nearLimit }: any) => {
               const overspendBy = Math.max(0, spent - budget.amount);
               return (
                 <div key={budget.id} className="rounded-xl bg-gray-50 p-4">
@@ -116,9 +114,27 @@ export default async function MoneyPage() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
+        <div className="rounded-2xl border border-gray-200 bg-white p-4 md:col-span-2">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold">Net Worth Over Time</h3>
+          </div>
+          <div className="mt-4">
+            {/* Build a simple placeholder snapshot series (last 30 days) */}
+            <NetWorthChart data={(() => {
+              const now = new Date();
+              const arr: { date: string; netWorth: number }[] = [];
+              const total = accounts.reduce((s: number, a: any) => s + (Number(a.balance) || 0), 0);
+              for (let i = 29; i >= 0; i--) {
+                const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+                arr.push({ date: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), netWorth: Number(total) });
+              }
+              return arr;
+            })()} />
+          </div>
+        </div>
         <div className="rounded-2xl border border-gray-200 bg-white p-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-medium">Accounts</h3>
+            <h3 className="text-lg font-semibold">Accounts</h3>
             <Link href="/money/accounts" className="text-sm text-blue-600">Manage</Link>
           </div>
           <div className="mt-4">
@@ -148,7 +164,7 @@ export default async function MoneyPage() {
 
         <div className="rounded-2xl border border-gray-200 bg-white p-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-medium">Recent transactions</h3>
+            <h3 className="text-lg font-semibold">Recent transactions</h3>
             <Link href="/money/transactions" className="text-sm text-blue-600">All</Link>
           </div>
           <div className="mt-4">

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { getMoodEmoji } from '../lib/moodUtils';
+import Button from './ui/Button';
 
 export default function JournalEntryItem({ entry, onUpdate }: { entry: any; onUpdate?: (formData: FormData) => Promise<void> }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -42,8 +43,8 @@ export default function JournalEntryItem({ entry, onUpdate }: { entry: any; onUp
             />
           </div>
           <div className="flex gap-2">
-            <button type="submit" className="rounded bg-green-600 px-4 py-2 text-sm text-white">Save</button>
-            <button type="button" onClick={() => setIsEditing(false)} className="rounded bg-gray-300 px-4 py-2 text-sm">Cancel</button>
+            <Button type="submit" variant="primary" size="sm">Save</Button>
+            <Button type="button" variant="secondary" size="sm" onClick={() => setIsEditing(false)}>Cancel</Button>
           </div>
         </form>
       ) : (
@@ -57,7 +58,7 @@ export default function JournalEntryItem({ entry, onUpdate }: { entry: any; onUp
           </div>
           <p className="mt-3 text-sm text-gray-700 whitespace-pre-wrap">{content}</p>
           <div className="mt-4 flex gap-2">
-            <button onClick={() => setIsEditing(true)} className="text-sm text-blue-600">Edit</button>
+            <Button onClick={() => setIsEditing(true)} variant="ghost" size="sm">Edit</Button>
           </div>
         </div>
       )}

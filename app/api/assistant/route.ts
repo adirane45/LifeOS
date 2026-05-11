@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { prisma } from '../../../lib/prisma';
 import { addTransaction, createJournalEntry, logHabit } from '../../../lib/assistantTools';
+import { getAccounts, getHabits, getHealthMetrics, getJournalEntries } from '../../../lib/data';
 
 export const runtime = 'nodejs';
 
@@ -171,36 +172,40 @@ export async function POST(req: Request) {
     const messages: AssistantMessage[] = body.messages ?? [];
     const userId = 1;
 
-    // Gather live snapshot from Prisma
-    // Total net worth
-    const accounts = await prisma.account.findMany({ where: { userId } });
-    const totalNetWorth = accounts.reduce((s, a) => s + Number(a.balance ?? 0), 0);
-
-    // Today's expenses
+    // Gather live snapshot in parallel.
     const start = new Date();
     start.setHours(0, 0, 0, 0);
     const end = new Date(start);
     end.setDate(end.getDate() + 1);
 
-    const todaysExpensesResult = await prisma.transaction.aggregate({
-      _sum: { amount: true },
-      where: {
-        type: 'EXPENSE',
-        date: {
-          gte: start,
-          lt: end
+    const [accounts, habits, metrics, journals, todaysExpensesResult] = await Promise.all([
+      getAccounts(userId),
+      getHabits(userId),
+      getHealthMetrics(userId, 100),
+      getJournalEntries(userId, 5),
+      prisma.transaction.aggregate({
+        _sum: { amount: true },
+        where: {
+          account: { userId },
+          type: 'EXPENSE',
+          date: {
+            gte: start,
+            lt: end
+          }
         }
-      }
-    });
+      })
+    ]);
+    const totalNetWorth = accounts.reduce((s: number, a: any) => s + Number(a.balance ?? 0), 0);
+
     const todaysExpenses = todaysExpensesResult._sum.amount ?? 0;
 
     // Habits with simple streak (count of consecutive days including today)
-    const habits = await prisma.habit.findMany({ where: { userId } });
     const habitStreaks: Array<{ id: number; name: string; streak: number }> = [];
-    for (const h of habits) {
+    await Promise.all(habits.map(async (h: any) => {
       const logs = await prisma.habitLog.findMany({
         where: { habitId: h.id },
-        orderBy: { date: 'desc' }
+        orderBy: { date: 'desc' },
+        take: 30
       });
       let streak = 0;
       let dayCursor = new Date();
@@ -217,18 +222,13 @@ export async function POST(req: Request) {
         }
       }
       habitStreaks.push({ id: h.id, name: h.name, streak });
-    }
+    }));
 
-    // Latest health metrics (most recent by type)
-    const metrics = await prisma.healthMetric.findMany({ where: { userId }, orderBy: { date: 'desc' } });
     const latestMetricsMap = new Map<string, any>();
     for (const m of metrics) {
       if (!latestMetricsMap.has(m.type)) latestMetricsMap.set(m.type, m);
     }
     const latestMetrics = Array.from(latestMetricsMap.entries()).map(([type, metric]) => ({ type, metric }));
-
-    // Last 5 journal entries
-    const journals = await prisma.journalEntry.findMany({ where: { userId }, orderBy: { date: 'desc' }, take: 5 });
 
     // Build data summary
     const summaryLines: string[] = [];
@@ -338,8 +338,8 @@ ${summaryLines.join('\n')}`;
 
     if (extracted.tool) {
       // Tool was found; execute it server-side
-      const accountsById = new Map(accounts.map((account) => [account.id, account]));
-      const habitsById = new Map(habitStreaks.map((habit) => [habit.id, habit]));
+      const accountsById = new Map<number, any>(accounts.map((account: any) => [account.id, account]));
+      const habitsById = new Map<number, any>(habitStreaks.map((habit: any) => [habit.id, habit]));
       const toolResult = await executeTool(extracted.tool);
       
       // Build a simple confirmation message

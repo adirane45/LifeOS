@@ -3,8 +3,6 @@ import { NextResponse } from 'next/server';
 import { prisma } from '../../../../lib/prisma';
 import { convertToCSV } from '../../../../lib/exportUtils';
 
-export const dynamic = 'force-dynamic';
-
 export async function GET() {
   const cookieStore = await cookies();
   const token = cookieStore.get('lifeos_session')?.value;
@@ -20,7 +18,7 @@ export async function GET() {
   });
 
   const csv = convertToCSV(
-    metrics.map((metric) => ({
+    metrics.map((metric: any) => ({
       Date: metric.date.toISOString(),
       Type: metric.type,
       Value: metric.value.toFixed(1),

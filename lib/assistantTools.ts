@@ -1,11 +1,12 @@
 import { revalidatePath } from 'next/cache';
 import { prisma } from './prisma';
 import { createTransactionAndUpdateBalance } from './accountHelpers';
+import { getUser } from './data';
 
 type TransactionType = 'INCOME' | 'EXPENSE';
 
 async function getOrCreateAssistantUserId() {
-  const existingUser = await prisma.user.findFirst({ orderBy: { id: 'asc' } });
+  const existingUser = await getUser();
   if (existingUser) {
     return existingUser.id;
   }

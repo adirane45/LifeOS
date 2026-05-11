@@ -12,6 +12,7 @@ import {
   Settings as SettingsIcon,
   X
 } from 'lucide-react';
+import Button from './ui/Button';
 
 const nav = [
   { name: 'Dashboard', href: '/', icon: Home },
@@ -43,16 +44,13 @@ function SidebarContent({ closeOnNavigate, onClose }: { closeOnNavigate?: boolea
       </nav>
 
       <form action={logout} className="mt-6">
-        <button
-          type="submit"
-          className="w-full text-left flex items-center gap-3 p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-red-600 dark:text-red-400"
-        >
+        <Button type="submit" variant="ghost" className="w-full text-left flex items-center gap-3 text-sm text-red-600 dark:text-red-400">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7" />
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8v8" />
           </svg>
           <span>Logout</span>
-        </button>
+        </Button>
       </form>
     </div>
   );
@@ -74,9 +72,9 @@ export default function Sidebar({ isMobileOpen, onClose }: { isMobileOpen?: bool
             <div className={`fixed inset-y-0 left-0 z-50 w-64 transform transition-transform ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
               <div className="h-full p-4 bg-white dark:bg-gray-900">
                 <div className="flex justify-end">
-                  <button onClick={() => onClose && onClose()} aria-label="Close sidebar" className="p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800">
+                  <Button onClick={() => onClose && onClose()} aria-label="Close sidebar" variant="ghost" size="sm" className="p-2">
                     <X className="w-5 h-5 text-gray-700 dark:text-gray-200" />
-                  </button>
+                  </Button>
                 </div>
                 <SidebarContent closeOnNavigate onClose={onClose} />
               </div>

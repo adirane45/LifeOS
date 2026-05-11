@@ -3,8 +3,11 @@ import Link from 'next/link';
 import { PiggyBank } from 'lucide-react';
 import { prisma } from '../../../lib/prisma';
 import ConfirmDeleteForm from '../../../components/ConfirmDeleteForm';
+import Button from '../../../components/ui/Button';
+import Card from '../../../components/ui/Card';
+import { getTransactions, getUser } from '../../../lib/data';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 function monthStart(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), 1);
@@ -25,19 +28,18 @@ function toMonthLabel(date: Date) {
 }
 
 export default async function BudgetsPage() {
-  let user = await prisma.user.findFirst();
+  let user = await getUser();
   if (!user) {
     user = await prisma.user.create({
       data: { name: 'Me', email: 'me@lifeos.local' }
     });
   }
 
-  const categories = await prisma.transaction.findMany({
-    where: { account: { userId: user.id }, type: 'EXPENSE' },
-    select: { category: true },
-    distinct: ['category'],
-    orderBy: { category: 'asc' }
-  });
+  const categories = Array.from(
+    new Set((await getTransactions(user.id, 500, 'desc', `EXPENSE|||||0`)).map((transaction: any) => transaction.category))
+  )
+    .sort()
+    .map((category: any) => ({ category }));
 
   async function createOrUpdateBudget(formData: FormData) {
     'use server';
@@ -126,7 +128,7 @@ export default async function BudgetsPage() {
   });
 
   const budgetRows = await Promise.all(
-    budgets.map(async (budget) => {
+    budgets.map(async (budget: any) => {
       const start = monthStart(new Date(budget.month));
       const end = nextMonthStart(start);
       const spentAgg = await prisma.transaction.aggregate({
@@ -149,86 +151,90 @@ export default async function BudgetsPage() {
   const currentMonth = monthStart(new Date());
 
   return (
-    <section className="space-y-6">
+    <section className="space-y-6 p-4">
       <div>
-        <h2 className="text-2xl font-semibold">Budgets</h2>
+        <h2 className="text-2xl font-bold">Budgets</h2>
         <p className="text-sm text-gray-500">Set monthly category limits and track spending progress.</p>
       </div>
 
-      <div className="rounded-2xl border border-gray-200 bg-white p-4">
-        <h3 className="text-lg font-medium">Create or update budget</h3>
-        <form action={createOrUpdateBudget} className="mt-4 grid gap-3 md:grid-cols-3">
-          <div>
-            <label className="text-sm">Category</label>
-            <input name="category" list="budget-categories" required placeholder="Food" className="mt-1 w-full rounded border px-3 py-2" />
-            <datalist id="budget-categories">
-              {categories.map((c) => (
-                <option key={c.category} value={c.category} />
-              ))}
-            </datalist>
-          </div>
-          <div>
-            <label className="text-sm">Monthly amount</label>
-            <input name="amount" type="number" step="0.01" required className="mt-1 w-full rounded border px-3 py-2" />
-          </div>
-          <div>
-            <label className="text-sm">Month</label>
-            <input name="month" type="month" defaultValue={toMonthInputValue(currentMonth)} required className="mt-1 w-full rounded border px-3 py-2" />
-          </div>
-          <div className="md:col-span-3">
-            <button type="submit" className="rounded bg-blue-600 px-4 py-2 text-white">Save budget</button>
-            <Link href="/money" className="ml-3 text-sm text-blue-600 hover:text-blue-700">Back to Money overview</Link>
-          </div>
-        </form>
-      </div>
+      <Card className="p-0">
+        <div className="p-4">
+          <h3 className="text-lg font-semibold">Create or update budget</h3>
+          <form action={createOrUpdateBudget} className="mt-4 grid gap-3 md:grid-cols-3">
+            <div>
+              <label className="text-sm">Category</label>
+              <input name="category" list="budget-categories" required placeholder="Food" className="mt-1 w-full rounded border px-3 py-2" />
+              <datalist id="budget-categories">
+                {categories.map((c) => (
+                  <option key={c.category} value={c.category} />
+                ))}
+              </datalist>
+            </div>
+            <div>
+              <label className="text-sm">Monthly amount</label>
+              <input name="amount" type="number" step="0.01" required className="mt-1 w-full rounded border px-3 py-2" />
+            </div>
+            <div>
+              <label className="text-sm">Month</label>
+              <input name="month" type="month" defaultValue={toMonthInputValue(currentMonth)} required className="mt-1 w-full rounded border px-3 py-2" />
+            </div>
+            <div className="md:col-span-3">
+              <Button type="submit" variant="primary">Save budget</Button>
+              <Button href="/money" variant="ghost" className="ml-3">Back to Money overview</Button>
+            </div>
+          </form>
+        </div>
+      </Card>
 
-      <div className="rounded-2xl border border-gray-200 bg-white p-4">
-        <h3 className="text-lg font-medium">Existing budgets</h3>
-        {budgetRows.length === 0 ? (
-          <div className="mt-4 rounded-xl bg-gray-50 p-6 text-center text-sm text-gray-500">
-            <PiggyBank className="mx-auto h-8 w-8 text-gray-400" />
-            <p className="mt-2">No budgets set yet.</p>
-          </div>
-        ) : (
-          <ul className="mt-4 space-y-3">
-            {budgetRows.map(({ budget, spent, progress }) => {
-              const overspent = spent > budget.amount;
-              return (
-                <li key={budget.id} className="rounded-xl bg-gray-50 p-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-medium">{budget.category}</p>
-                      <p className="text-xs text-gray-500">{toMonthLabel(new Date(budget.month))}</p>
+      <Card className="p-0">
+        <div className="p-4">
+          <h3 className="text-lg font-semibold">Existing budgets</h3>
+          {budgetRows.length === 0 ? (
+            <div className="mt-4 rounded-xl bg-gray-50 p-6 text-center text-sm text-gray-500">
+              <PiggyBank className="mx-auto h-8 w-8 text-gray-400" />
+              <p className="mt-2">No budgets set yet.</p>
+            </div>
+          ) : (
+            <ul className="mt-4 space-y-3">
+              {budgetRows.map(({ budget, spent, progress }) => {
+                const overspent = spent > budget.amount;
+                return (
+                  <li key={budget.id} className="rounded-xl bg-gray-50 p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-medium">{budget.category}</p>
+                        <p className="text-xs text-gray-500">{toMonthLabel(new Date(budget.month))}</p>
+                      </div>
+                      <p className="text-sm font-semibold">{spent.toFixed(2)} / {budget.amount.toFixed(2)}</p>
                     </div>
-                    <p className="text-sm font-semibold">{spent.toFixed(2)} / {budget.amount.toFixed(2)}</p>
-                  </div>
 
-                  <div className="mt-2 h-2 w-full rounded-full bg-gray-200">
-                    <div className={`h-2 rounded-full ${overspent ? 'bg-rose-500' : progress >= 80 ? 'bg-amber-500' : 'bg-emerald-500'}`} style={{ width: `${Math.min(progress, 100)}%` }} />
-                  </div>
+                    <div className="mt-2 h-2 w-full rounded-full bg-gray-200">
+                      <div className={`h-2 rounded-full ${overspent ? 'bg-rose-500' : progress >= 80 ? 'bg-amber-500' : 'bg-emerald-500'}`} style={{ width: `${Math.min(progress, 100)}%` }} />
+                    </div>
 
-                  <div className="mt-3 flex flex-wrap items-center gap-2">
-                    <form action={updateBudget} className="flex items-center gap-2">
-                      <input type="hidden" name="id" value={budget.id} />
-                      <input name="amount" type="number" step="0.01" defaultValue={budget.amount} className="w-32 rounded border px-2 py-1 text-sm" />
-                      <button type="submit" className="rounded border border-gray-300 px-3 py-1 text-sm hover:bg-gray-100">Update</button>
-                    </form>
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <form action={updateBudget} className="flex items-center gap-2">
+                        <input type="hidden" name="id" value={budget.id} />
+                        <input name="amount" type="number" step="0.01" defaultValue={budget.amount} className="w-32 rounded border px-2 py-1 text-sm" />
+                        <Button type="submit" variant="secondary" size="sm">Update</Button>
+                      </form>
 
-                    <ConfirmDeleteForm
-                      action={deleteBudget}
-                      itemId={budget.id}
-                      title="Delete budget?"
-                      message="This will remove the monthly budget alert for this category."
-                      confirmLabel="Delete budget"
-                      triggerLabel="Delete"
-                    />
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </div>
+                      <ConfirmDeleteForm
+                        action={deleteBudget}
+                        itemId={budget.id}
+                        title="Delete budget?"
+                        message="This will remove the monthly budget alert for this category."
+                        confirmLabel="Delete budget"
+                        triggerLabel="Delete"
+                      />
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+      </Card>
     </section>
   );
 }

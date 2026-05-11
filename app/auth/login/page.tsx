@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { login } from '../serverActions';
+import Button from '../../../components/ui/Button';
 
 export default function LoginPage() {
   return (
@@ -20,7 +21,7 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Sign in</button>
+            <Button type="submit" variant="primary" className="w-full">Sign in</Button>
           </div>
         </form>
 

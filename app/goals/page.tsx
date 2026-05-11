@@ -3,8 +3,11 @@ import { revalidatePath } from 'next/cache';
 import { Target, PlusCircle } from 'lucide-react';
 import { prisma } from '../../lib/prisma';
 import ConfirmDeleteForm from '../../components/ConfirmDeleteForm';
+import Button from '../../components/ui/Button';
+import Card from '../../components/ui/Card';
+import { getGoals, getUser } from '../../lib/data';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 function clampPercent(value: number) {
   if (Number.isNaN(value) || !Number.isFinite(value)) return 0;
@@ -32,7 +35,7 @@ function categoryClass(category: string) {
 }
 
 export default async function GoalsPage() {
-  let user = await prisma.user.findFirst();
+  let user = await getUser();
 
   if (!user) {
     user = await prisma.user.create({
@@ -104,21 +107,18 @@ export default async function GoalsPage() {
     revalidatePath('/');
   }
 
-  const goals = await prisma.goal.findMany({
-    where: { userId: user.id },
-    orderBy: [{ completed: 'asc' }, { targetDate: 'asc' }, { id: 'desc' }]
-  });
+  const goals = await getGoals(user.id, 100);
 
   return (
-    <section className="space-y-6">
+    <section className="space-y-6 p-4">
       <div>
-        <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">Goals</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Goals</h2>
         <p className="text-sm text-gray-500 dark:text-gray-400">Track progress across finance, habits, health, and more.</p>
       </div>
 
       <div id="add-goal" className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
-        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Add goal</h3>
-        <form action={createGoal} className="mt-4 grid gap-3 md:grid-cols-2">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Add goal</h3>
+        <form action={createGoal} className="mt-4 grid gap-4 md:grid-cols-2">
           <div className="md:col-span-2">
             <label className="text-sm text-gray-700 dark:text-gray-200">Title</label>
             <input name="title" required className="mt-1 w-full rounded border px-3 py-2 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100" />
@@ -160,13 +160,13 @@ export default async function GoalsPage() {
           </div>
 
           <div className="md:col-span-2">
-            <button type="submit" className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">Create goal</button>
+            <Button type="submit" variant="primary" className="rounded">Create goal</Button>
           </div>
         </form>
       </div>
 
       <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
-        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Your goals</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Your goals</h3>
 
         {goals.length === 0 ? (
           <div className="mt-4 rounded-xl bg-gray-50 p-6 text-center dark:bg-gray-900/40">
@@ -181,64 +181,57 @@ export default async function GoalsPage() {
             {goals.map((goal: any) => {
               const progress = goalProgress(goal);
               const unit = goal.unit ? ` ${goal.unit}` : '';
+              const accent = goal.category === 'FINANCE' ? 'green' : goal.category === 'HABIT' ? 'blue' : goal.category === 'HEALTH' ? 'amber' : 'default';
               return (
-                <div key={goal.id} className="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900/40">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <h4 className="text-base font-semibold text-gray-900 dark:text-gray-100">{goal.title}</h4>
-                      {goal.description ? <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">{goal.description}</p> : null}
-                    </div>
-                    <span className={`rounded-full px-2 py-1 text-xs font-medium ${categoryClass(goal.category)}`}>
-                      {goal.category}
-                    </span>
-                  </div>
+                <Card key={goal.id} title={goal.title} accent={accent} className="p-0">
+                  <div className="p-4">
+                    {goal.description ? <p className="text-sm text-gray-600 dark:text-gray-300">{goal.description}</p> : null}
 
-                  <div className="mt-3">
-                    <div className="mb-1 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-                      <span>Progress</span>
-                      <span>{Math.round(progress)}%</span>
+                    <div className="mt-3">
+                      <div className="mb-1 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                        <span>Progress</span>
+                        <span>{Math.round(progress)}%</span>
+                      </div>
+                      <div className="h-2 w-full rounded-full bg-gray-200 dark:bg-gray-700">
+                        <div className="h-2 rounded-full bg-primary" style={{ width: `${progress}%` }} />
+                      </div>
+                      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        {(goal.currentValue ?? 0).toFixed(2)}{unit} / {(goal.targetValue ?? 0).toFixed(2)}{unit}
+                      </p>
+                      {goal.targetDate ? (
+                        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Target date: {new Date(goal.targetDate).toLocaleDateString()}</p>
+                      ) : null}
                     </div>
-                    <div className="h-2 w-full rounded-full bg-gray-200 dark:bg-gray-700">
-                      <div className="h-2 rounded-full bg-blue-600" style={{ width: `${progress}%` }} />
-                    </div>
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                      {(goal.currentValue ?? 0).toFixed(2)}{unit} / {(goal.targetValue ?? 0).toFixed(2)}{unit}
-                    </p>
-                    {goal.targetDate ? (
-                      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Target date: {new Date(goal.targetDate).toLocaleDateString()}</p>
-                    ) : null}
-                  </div>
 
-                  <div className="mt-4 grid gap-2 md:grid-cols-[1fr_auto]">
-                    <form action={updateGoal} className="flex items-center gap-2">
-                      <input type="hidden" name="id" value={goal.id} />
-                      <input
-                        name="currentValue"
-                        type="number"
-                        step="0.01"
-                        defaultValue={goal.currentValue ?? ''}
-                        placeholder="Current"
-                        className="w-full rounded border px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+                    <div className="mt-4 grid gap-2 md:grid-cols-[1fr_auto]">
+                      <form action={updateGoal} className="flex items-center gap-2">
+                        <input type="hidden" name="id" value={goal.id} />
+                        <input
+                          name="currentValue"
+                          type="number"
+                          step="0.01"
+                          defaultValue={goal.currentValue ?? ''}
+                          placeholder="Current"
+                          className="w-full rounded border px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+                        />
+                        <label className="inline-flex items-center gap-1 text-sm text-gray-700 dark:text-gray-200">
+                          <input name="completed" type="checkbox" defaultChecked={goal.completed} />
+                          Done
+                        </label>
+                        <Button type="submit" variant="secondary" size="sm">Update</Button>
+                      </form>
+
+                      <ConfirmDeleteForm
+                        action={deleteGoal}
+                        itemId={goal.id}
+                        title="Delete goal?"
+                        message="Deleting this goal will permanently remove its progress. This cannot be undone."
+                        confirmLabel="Delete goal"
+                        triggerLabel="Delete"
                       />
-                      <label className="inline-flex items-center gap-1 text-sm text-gray-700 dark:text-gray-200">
-                        <input name="completed" type="checkbox" defaultChecked={goal.completed} />
-                        Done
-                      </label>
-                      <button type="submit" className="rounded border border-gray-300 px-3 py-2 text-sm hover:bg-gray-100 dark:border-gray-600 dark:text-gray-100 dark:hover:bg-gray-800">
-                        Update
-                      </button>
-                    </form>
-
-                    <ConfirmDeleteForm
-                      action={deleteGoal}
-                      itemId={goal.id}
-                      title="Delete goal?"
-                      message="Deleting this goal will permanently remove its progress. This cannot be undone."
-                      confirmLabel="Delete goal"
-                      triggerLabel="Delete"
-                    />
+                    </div>
                   </div>
-                </div>
+                </Card>
               );
             })}
           </div>
