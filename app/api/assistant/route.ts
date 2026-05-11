@@ -160,7 +160,14 @@ export async function POST(req: Request) {
   try {
     const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) {
-      return NextResponse.json({ error: 'GROQ_API_KEY is not set in environment' }, { status: 500 });
+      console.warn('[Assistant] GROQ_API_KEY is not set in environment');
+      return NextResponse.json(
+        { 
+          error: '⚠️ The AI assistant is currently unavailable. Please check your API key or wait a moment.',
+          code: 'MISSING_API_KEY'
+        }, 
+        { status: 503 }
+      );
     }
 
     const client = new OpenAI({
@@ -313,10 +320,31 @@ ${summaryLines.join('\n')}`;
       const details = getErrorDetails(error);
       if (details.status === 404) {
         completion = await createCompletion('mixtral-8x7b-32768');
+      } else if (details.status === 429 || details.status === 503) {
+        // Rate limit or service unavailable
+        console.warn('[Assistant] API rate limited or unavailable:', details.status);
+        return NextResponse.json(
+          { 
+            error: '⚠️ The AI assistant is currently unavailable. Please check your API key or wait a moment.',
+            code: 'RATE_LIMITED'
+          },
+          { status: 503 }
+        );
+      } else if (details.status === 401 || details.status === 403) {
+        // Unauthorized or forbidden
+        console.warn('[Assistant] API authentication failed:', details.status);
+        return NextResponse.json(
+          { 
+            error: '⚠️ The AI assistant is currently unavailable. Please check your API key or wait a moment.',
+            code: 'INVALID_API_KEY'
+          },
+          { status: 503 }
+        );
       } else {
         return NextResponse.json(
           {
-            error: details.message,
+            error: '⚠️ The AI assistant encountered an error. Please try again.',
+            code: 'UNKNOWN_ERROR',
             details: typeof details.body === 'string' ? details.body : JSON.stringify(details.body ?? null),
             status: details.status ?? 500
           },

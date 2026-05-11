@@ -35,7 +35,7 @@ function SidebarContent({ closeOnNavigate, onClose }: { closeOnNavigate?: boolea
             key={item.name}
             href={item.href}
             onClick={() => closeOnNavigate && onClose && onClose()}
-            className="flex items-center gap-3 p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200"
+            className="flex items-center gap-3 p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800 transition-all"
           >
             <item.icon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
             <span className="text-sm">{item.name}</span>

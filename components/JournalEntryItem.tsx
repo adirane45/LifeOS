@@ -16,30 +16,36 @@ export default function JournalEntryItem({ entry, onUpdate }: { entry: any; onUp
         <form action={onUpdate} className="space-y-3">
           <input type="hidden" name="id" value={String(entry.id)} />
           <div>
+            <label htmlFor={`entry-title-${entry.id}`} className="text-sm font-medium text-gray-900 dark:text-gray-100 block mb-1">Title</label>
             <input
+              id={`entry-title-${entry.id}`}
               name="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="text-lg font-medium w-full rounded border px-3 py-2"
-              placeholder="Title"
+              className="text-lg font-medium w-full rounded border border-gray-300 px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-all"
+              placeholder="Entry title"
             />
           </div>
           <div>
+            <label htmlFor={`entry-content-${entry.id}`} className="text-sm font-medium text-gray-900 dark:text-gray-100 block mb-1">Content</label>
             <textarea
+              id={`entry-content-${entry.id}`}
               name="content"
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              className="h-32 w-full rounded border px-3 py-2"
+              className="h-32 w-full rounded border border-gray-300 px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-all"
               placeholder="Entry content"
             />
           </div>
           <div>
+            <label htmlFor={`entry-mood-${entry.id}`} className="text-sm font-medium text-gray-900 dark:text-gray-100 block mb-1">Mood (optional)</label>
             <input
+              id={`entry-mood-${entry.id}`}
               name="mood"
               value={mood}
               onChange={(e) => setMood(e.target.value)}
-              className="w-full rounded border px-3 py-2"
-              placeholder="Mood (e.g., happy, sad, calm)"
+              className="w-full rounded border border-gray-300 px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-all"
+              placeholder="e.g., happy, sad, calm"
             />
           </div>
           <div className="flex gap-2">

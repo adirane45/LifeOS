@@ -32,6 +32,8 @@ export default function HabitCheckbox({ habitId, initialCompleted }: { habitId: 
     <Button
       onClick={toggleCompletion}
       disabled={isPending}
+      aria-label={`Toggle habit completion - ${isCompletedOptimistic ? 'completed' : 'not completed'}`}
+      aria-pressed={isCompletedOptimistic}
       variant="ghost"
       size="sm"
       className={`h-6 w-6 p-0 inline-flex items-center justify-center rounded-full border-2 ${

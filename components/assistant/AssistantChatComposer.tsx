@@ -1,10 +1,17 @@
 "use client";
 
-import { type FormEvent, useState } from 'react';
+import { type FormEvent, useRef, useEffect, useState } from 'react';
 import Button from '../ui/Button';
 
-export default function AssistantChatComposer({ loading, onSend }: { loading: boolean; onSend: (content: string) => Promise<void> | void }) {
+export default function AssistantChatComposer({ loading, onSend, autoFocus }: { loading: boolean; onSend: (content: string) => Promise<void> | void; autoFocus?: boolean }) {
   const [input, setInput] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (autoFocus && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [autoFocus]);
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -15,9 +22,9 @@ export default function AssistantChatComposer({ loading, onSend }: { loading: bo
   };
 
   return (
-    <form onSubmit={submit} className="flex gap-2 border-t bg-white p-4">
-      <input value={input} onChange={(event) => setInput(event.target.value)} placeholder="Type a message..." className="flex-1 rounded border px-3 py-2" />
-      <Button type="submit" disabled={loading} variant="primary">Send</Button>
+    <form onSubmit={submit} className="flex flex-col gap-2 border-t bg-white p-4 sm:flex-row sm:items-center">
+      <input ref={inputRef} value={input} onChange={(event) => setInput(event.target.value)} placeholder="Type a message..." aria-label="Chat message input" className="w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-700 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900" />
+      <Button type="submit" disabled={loading} variant="primary" className="w-full sm:w-auto">Send</Button>
     </form>
   );
 }

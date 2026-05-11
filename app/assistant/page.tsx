@@ -88,13 +88,13 @@ export default function AssistantPage() {
   };
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="p-4 border-b">
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="border-b p-4">
         <h1 className="text-lg font-semibold">Assistant</h1>
-        <p className="text-sm text-gray-500">Ask LifeOS about your finances, habits, health and journal.</p>
+        <p className="text-sm text-gray-600 dark:text-gray-500">Ask LifeOS about your finances, habits, health and journal.</p>
       </div>
       <AssistantChatFeed messages={messages} loading={loading} error={error} />
-      <AssistantChatComposer loading={loading} onSend={send} />
+      <AssistantChatComposer loading={loading} onSend={send} autoFocus />
     </div>
   );
 }

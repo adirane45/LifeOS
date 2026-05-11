@@ -64,11 +64,11 @@ export default async function MoneyPage() {
   });
 
   return (
-    <section className="space-y-6">
+    <section className="space-y-6 p-4">
       <div>
         <h2 className="text-2xl font-semibold">Money</h2>
-        <p className="text-sm text-gray-500">Overview of accounts and recent transactions.</p>
-        <div className="mt-2 flex items-center gap-3 text-sm">
+        <p className="text-sm text-gray-600 dark:text-gray-500">Overview of accounts and recent transactions.</p>
+        <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-gray-600 dark:text-gray-500">
           <Link href="/money/accounts" className="text-blue-600 hover:text-blue-700">Accounts</Link>
           <Link href="/money/transactions" className="text-blue-600 hover:text-blue-700">Transactions</Link>
           <Link href="/money/budgets" className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700">
@@ -149,7 +149,7 @@ export default async function MoneyPage() {
             ) : (
               <ul className="space-y-3">
                 {accounts.map((a: any) => (
-                  <li key={a.id} className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3">
+                  <li key={a.id} className="flex flex-col gap-2 rounded-xl bg-gray-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between hover:bg-gray-100 hover:shadow-sm transition-all duration-200">
                     <div>
                       <div className="text-sm font-medium">{a.name}</div>
                       <div className="text-xs text-gray-500">{a.type} • {a.currency}</div>
@@ -179,7 +179,7 @@ export default async function MoneyPage() {
             ) : (
               <ul className="space-y-3">
                 {recent.map((t: any) => (
-                  <li key={t.id} className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3">
+                  <li key={t.id} className="flex flex-col gap-2 rounded-xl bg-gray-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between hover:bg-gray-100 hover:shadow-sm transition-all duration-200">
                     <div>
                       <div className="text-sm">{t.category}</div>
                       <div className="text-xs text-gray-500">{new Date(t.date).toLocaleString()} • {t.account?.name}</div>

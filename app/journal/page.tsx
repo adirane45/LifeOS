@@ -7,6 +7,7 @@ import EmptyState from '../../components/EmptyState';
 import ConfirmDeleteForm from '../../components/ConfirmDeleteForm';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
+import FormSubmitWrapper from '../../components/FormSubmitWrapper';
 import { getJournalEntries } from '../../lib/data';
 
 export const revalidate = 60;
@@ -61,9 +62,9 @@ export default async function JournalPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 className="text-2xl font-bold">Journal</h2>
-          <p className="text-sm text-gray-500">Capture your thoughts and reflect on life.</p>
+          <p className="text-sm text-gray-600 dark:text-gray-500">Capture your thoughts and reflect on life.</p>
         </div>
-        <Button href="/api/export/journal" download variant="secondary" className="inline-flex items-center justify-center">Export CSV</Button>
+        <Button href="/api/export/journal" download aria-label="Export journal entries to CSV" variant="secondary" className="inline-flex items-center justify-center">Export CSV</Button>
       </div>
 
       <div className="grid gap-6 md:grid-cols-[1fr_250px]">
@@ -71,27 +72,33 @@ export default async function JournalPage() {
           <Card className="p-0">
             <div className="p-4">
               <h3 className="text-lg font-semibold">New entry</h3>
-              <form id="new-entry" action={addEntry} className="mt-4 space-y-3">
+              <FormSubmitWrapper 
+                action={addEntry}
+                successMessage="Journal entry saved successfully"
+                errorMessage="Failed to save entry"
+              >
+              <div className="mt-4 space-y-3">
               <div>
-                <label className="text-sm">Title</label>
-                <input name="title" placeholder="Entry title" className="mt-1 w-full rounded border px-3 py-2" />
+                <label htmlFor="journal-title" className="text-sm font-medium text-gray-900 dark:text-gray-100 block mb-1">Title</label>
+                <input id="journal-title" name="title" placeholder="Entry title" className="mt-1 w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-700 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900" />
               </div>
               <div>
-                <label className="text-sm">Content</label>
-                <textarea name="content" rows={5} placeholder="Write your thoughts..." className="mt-1 w-full rounded border px-3 py-2" />
+                <label htmlFor="journal-content" className="text-sm font-medium text-gray-900 dark:text-gray-100 block mb-1">Content</label>
+                <textarea id="journal-content" name="content" rows={5} placeholder="Write your thoughts..." className="mt-1 w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-700 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900" />
               </div>
               <div>
-                <label className="text-sm">Mood (optional)</label>
-                <input name="mood" placeholder="e.g., happy, thoughtful, peaceful" className="mt-1 w-full rounded border px-3 py-2" />
+                <label htmlFor="journal-mood" className="text-sm font-medium text-gray-900 dark:text-gray-100 block mb-1">Mood (optional)</label>
+                <input id="journal-mood" name="mood" placeholder="e.g., happy, thoughtful, peaceful" className="mt-1 w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-700 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900" />
               </div>
               <div>
-                <label className="text-sm">Date</label>
-                <input name="date" type="date" defaultValue={new Date().toISOString().slice(0, 10)} className="mt-1 w-full rounded border px-3 py-2" />
+                <label htmlFor="journal-date" className="text-sm font-medium text-gray-900 dark:text-gray-100 block mb-1">Date</label>
+                <input id="journal-date" name="date" type="date" defaultValue={new Date().toISOString().slice(0, 10)} className="mt-1 w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-700 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900" />
               </div>
               <div>
                 <Button type="submit" variant="primary">Save entry</Button>
               </div>
-            </form>
+              </div>
+            </FormSubmitWrapper>
             </div>
           </Card>
 

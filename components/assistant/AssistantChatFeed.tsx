@@ -15,7 +15,7 @@ export default function AssistantChatFeed({ messages, loading, error }: { messag
   }, [messages, loading]);
 
   return (
-    <div ref={containerRef} className="flex-1 overflow-y-auto space-y-4 bg-gray-50 p-4">
+    <div ref={containerRef} className="min-h-0 flex-1 space-y-4 overflow-y-auto bg-gray-50 p-4">
       {messages.length === 0 && !loading ? (
         <div className="flex h-full flex-col items-center justify-center text-center">
           <div className="mb-4 rounded-full bg-gray-100 p-4 text-gray-400">
@@ -26,7 +26,7 @@ export default function AssistantChatFeed({ messages, loading, error }: { messag
         </div>
       ) : (
         messages.map((message, index) => (
-          <div key={index} className={`max-w-[80%] rounded-xl p-3 shadow ${message.role === 'user' ? 'ml-auto bg-blue-600 text-white' : 'mr-auto bg-white text-gray-900'}`}>
+          <div key={index} className={`max-w-[80%] break-words rounded-xl p-3 shadow ${message.role === 'user' ? 'ml-auto bg-blue-600 text-white' : 'mr-auto bg-white text-gray-900'}`}>
             <div className="whitespace-pre-wrap">{message.content}</div>
           </div>
         ))

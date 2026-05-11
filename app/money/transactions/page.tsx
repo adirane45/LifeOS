@@ -7,6 +7,8 @@ import ConfirmDeleteForm from '../../../components/ConfirmDeleteForm';
 import { processRecurringTransactions } from '../../../lib/recurring';
 import Button from '../../../components/ui/Button';
 import Card from '../../../components/ui/Card';
+import RecurringTransactionsButton from '../../../components/RecurringTransactionsButton';
+import FormSubmitWrapper from '../../../components/FormSubmitWrapper';
 import { getAccounts, getTransactions, getUser } from '../../../lib/data';
 
 export const revalidate = 60;
@@ -72,7 +74,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
           <h2 className="text-2xl font-bold">Transactions</h2>
           <p className="text-sm text-gray-500">Add and manage your transactions.</p>
         </div>
-        <Button href="/api/export/transactions" download variant="secondary" className="inline-flex items-center justify-center">Export CSV</Button>
+        <Button href="/api/export/transactions" download aria-label="Export transactions to CSV" variant="secondary" className="inline-flex items-center justify-center">Export CSV</Button>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
@@ -90,47 +92,51 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                 />
               </div>
             ) : (
-              <form id="add-transaction" action={createTransaction} className="mt-4 space-y-3">
-                <div>
-                  <label className="text-sm">Account</label>
-                  <select name="accountId" className="mt-1 w-full rounded border px-3 py-2">
+              <FormSubmitWrapper 
+                action={createTransaction}
+                successMessage="Transaction added successfully"
+                errorMessage="Failed to add transaction"
+              >
+                <div className="mt-4 space-y-3">
+                  <label htmlFor="accountId" className="text-sm font-medium text-gray-900 dark:text-gray-100 block mb-1">Account</label>
+                  <select id="accountId" name="accountId" className="mt-1 w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-700 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
                     {accounts.map((a: any) => (
                       <option key={a.id} value={a.id}>{a.name} • {a.currency}</option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="text-sm">Type</label>
-                  <select name="type" className="mt-1 w-full rounded border px-3 py-2">
+                  <label htmlFor="type" className="text-sm font-medium text-gray-900 dark:text-gray-100 block mb-1">Type</label>
+                  <select id="type" name="type" className="mt-1 w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-700 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
                     <option>INCOME</option>
                     <option>EXPENSE</option>
                   </select>
                 </div>
                 <div>
-                  <label className="text-sm">Amount</label>
-                  <input name="amount" type="number" step="0.01" className="mt-1 w-full rounded border px-3 py-2" />
+                  <label htmlFor="amount" className="text-sm font-medium text-gray-900 dark:text-gray-100 block mb-1">Amount</label>
+                  <input id="amount" name="amount" type="number" step="0.01" placeholder="0.00" className="mt-1 w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-700 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900" />
                 </div>
                 <div>
-                  <label className="text-sm">Category</label>
-                  <input name="category" className="mt-1 w-full rounded border px-3 py-2" />
+                  <label htmlFor="category" className="text-sm font-medium text-gray-900 dark:text-gray-100 block mb-1">Category</label>
+                  <input id="category" name="category" placeholder="e.g., Food, Transport" className="mt-1 w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-700 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900" />
                 </div>
                 <div>
-                  <label className="text-sm">Description</label>
-                  <input name="description" className="mt-1 w-full rounded border px-3 py-2" />
+                  <label htmlFor="description" className="text-sm font-medium text-gray-900 dark:text-gray-100 block mb-1">Description</label>
+                  <input id="description" name="description" placeholder="Optional description" className="mt-1 w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-700 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900" />
                 </div>
                 <div>
-                  <label className="text-sm">Date</label>
-                  <input name="date" type="datetime-local" defaultValue={new Date().toISOString().slice(0,16)} className="mt-1 w-full rounded border px-3 py-2" />
+                  <label htmlFor="date" className="text-sm font-medium text-gray-900 dark:text-gray-100 block mb-1">Date & Time</label>
+                  <input id="date" name="date" type="datetime-local" defaultValue={new Date().toISOString().slice(0,16)} className="mt-1 w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-700 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900" />
                 </div>
                 <div>
-                  <label className="inline-flex items-center gap-2">
-                    <input type="checkbox" name="isRecurring" className="form-checkbox" />
-                    <span className="text-sm">Recurring</span>
+                  <label htmlFor="isRecurring" className="inline-flex items-center gap-2">
+                    <input id="isRecurring" type="checkbox" name="isRecurring" className="form-checkbox rounded" />
+                    <span className="text-sm font-medium text-gray-900 dark:text-gray-100">Make this recurring</span>
                   </label>
                 </div>
                 <div>
-                  <label className="text-sm">Frequency</label>
-                  <select name="recurrenceRule" className="mt-1 w-full rounded border px-3 py-2">
+                  <label htmlFor="recurrenceRule" className="text-sm font-medium text-gray-900 dark:text-gray-100 block mb-1">Frequency</label>
+                  <select id="recurrenceRule" name="recurrenceRule" className="mt-1 w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-700 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
                     <option value="">--</option>
                     <option value="WEEKLY">Weekly</option>
                     <option value="MONTHLY">Monthly</option>
@@ -138,13 +144,13 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                   </select>
                 </div>
                 <div>
-                  <label className="text-sm">End date (optional)</label>
-                  <input name="recurrenceEndDate" type="date" className="mt-1 w-full rounded border px-3 py-2" />
+                  <label htmlFor="recurrenceEndDate" className="text-sm font-medium text-gray-900 dark:text-gray-100 block mb-1">End date (optional)</label>
+                  <input id="recurrenceEndDate" name="recurrenceEndDate" type="date" className="mt-1 w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-700 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900" />
                 </div>
                 <div>
                   <Button type="submit" variant="primary">Add</Button>
                 </div>
-              </form>
+              </FormSubmitWrapper>
             )}
           </div>
         </Card>
@@ -154,9 +160,9 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
             <h3 className="text-lg font-semibold">All transactions</h3>
             <div className="mt-4">
               {(process.env.CRON_SECRET || process.env.NODE_ENV !== 'production') && (
-                <form action={runRecurring} className="mb-4">
-                  <Button type="submit" variant="secondary" size="sm">Run recurring items</Button>
-                </form>
+                <div className="mb-4">
+                  <RecurringTransactionsButton action={runRecurring} />
+                </div>
               )}
             {transactions.length === 0 ? (
               <EmptyState
@@ -167,9 +173,10 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                 actionHref="#add-transaction"
               />
             ) : (
-              <ul className="space-y-3">
+              <div className="overflow-x-auto">
+              <ul className="min-w-[320px] space-y-3">
                 {transactions.map((t: any) => (
-                  <li key={t.id} className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3">
+                  <li key={t.id} className="flex flex-col gap-3 rounded-xl bg-gray-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between hover:bg-gray-100 hover:shadow-sm transition-all duration-200">
                     <div>
                       <div className="flex items-center gap-2">
                         <div className="text-sm">{t.category}</div>
@@ -191,6 +198,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
                   </li>
                 ))}
               </ul>
+              </div>
             )}
             </div>
           </div>

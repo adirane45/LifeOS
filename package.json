@@ -25,6 +25,7 @@
     "prisma": "*",
     "react": "*",
     "react-dom": "*",
+    "react-hot-toast": "^2.6.0",
     "recharts": "*",
     "tailwindcss": "*",
     "typescript": "*"

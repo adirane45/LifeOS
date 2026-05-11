@@ -20,7 +20,7 @@ const accentMap: Record<Accent, string> = {
 
 export default function Card({ title, icon, accent = 'default', children, className, ...rest }: CardProps) {
   return (
-    <div className={clsx('rounded-xl border bg-white dark:bg-gray-900 dark:border-gray-800 shadow-sm overflow-hidden', className)} {...rest}>
+    <div className={clsx('rounded-xl border bg-white dark:bg-gray-900 dark:border-gray-800 shadow-sm overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-200', className)} {...rest}>
       <div className={clsx('h-1', accentMap[accent])} />
       <div className="p-4">
         {(title || icon) && (

@@ -5,6 +5,7 @@ import { prisma } from '../../lib/prisma';
 import ConfirmDeleteForm from '../../components/ConfirmDeleteForm';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
+import FormSubmitWrapper from '../../components/FormSubmitWrapper';
 import { getGoals, getUser } from '../../lib/data';
 
 export const revalidate = 60;
@@ -113,25 +114,30 @@ export default async function GoalsPage() {
     <section className="space-y-6 p-4">
       <div>
         <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Goals</h2>
-        <p className="text-sm text-gray-500 dark:text-gray-400">Track progress across finance, habits, health, and more.</p>
+        <p className="text-sm text-gray-600 dark:text-gray-500">Track progress across finance, habits, health, and more.</p>
       </div>
 
       <div id="add-goal" className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Add goal</h3>
-        <form action={createGoal} className="mt-4 grid gap-4 md:grid-cols-2">
+        <FormSubmitWrapper 
+          action={createGoal}
+          successMessage="Goal created successfully"
+          errorMessage="Failed to create goal"
+        >
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
           <div className="md:col-span-2">
-            <label className="text-sm text-gray-700 dark:text-gray-200">Title</label>
-            <input name="title" required className="mt-1 w-full rounded border px-3 py-2 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100" />
+            <label htmlFor="goal-title" className="text-sm font-medium text-gray-700 dark:text-gray-200 block mb-1">Title</label>
+            <input id="goal-title" name="title" required placeholder="e.g., Save $5000" className="mt-1 w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-900 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900" />
           </div>
 
           <div className="md:col-span-2">
-            <label className="text-sm text-gray-700 dark:text-gray-200">Description</label>
-            <input name="description" className="mt-1 w-full rounded border px-3 py-2 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100" />
+            <label htmlFor="goal-description" className="text-sm font-medium text-gray-700 dark:text-gray-200 block mb-1">Description</label>
+            <input id="goal-description" name="description" placeholder="Optional description" className="mt-1 w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-900 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900" />
           </div>
 
           <div>
-            <label className="text-sm text-gray-700 dark:text-gray-200">Category</label>
-            <select name="category" defaultValue="OTHER" className="mt-1 w-full rounded border px-3 py-2 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100">
+            <label htmlFor="goal-category" className="text-sm font-medium text-gray-700 dark:text-gray-200 block mb-1">Category</label>
+            <select id="goal-category" name="category" defaultValue="OTHER" className="mt-1 w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-900 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
               <option value="FINANCE">FINANCE</option>
               <option value="HABIT">HABIT</option>
               <option value="HEALTH">HEALTH</option>
@@ -140,29 +146,30 @@ export default async function GoalsPage() {
           </div>
 
           <div>
-            <label className="text-sm text-gray-700 dark:text-gray-200">Target value</label>
-            <input name="targetValue" type="number" step="0.01" className="mt-1 w-full rounded border px-3 py-2 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100" />
+            <label htmlFor="goal-target" className="text-sm font-medium text-gray-700 dark:text-gray-200 block mb-1">Target value</label>
+            <input id="goal-target" name="targetValue" type="number" step="0.01" placeholder="100" className="mt-1 w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-900 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900" />
           </div>
 
           <div>
-            <label className="text-sm text-gray-700 dark:text-gray-200">Current value</label>
-            <input name="currentValue" type="number" step="0.01" className="mt-1 w-full rounded border px-3 py-2 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100" />
+            <label htmlFor="goal-current" className="text-sm font-medium text-gray-700 dark:text-gray-200 block mb-1">Current value</label>
+            <input id="goal-current" name="currentValue" type="number" step="0.01" placeholder="0" className="mt-1 w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-900 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900" />
           </div>
 
           <div>
-            <label className="text-sm text-gray-700 dark:text-gray-200">Unit</label>
-            <input name="unit" placeholder="₹ / kg / days" className="mt-1 w-full rounded border px-3 py-2 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100" />
+            <label htmlFor="goal-unit" className="text-sm font-medium text-gray-700 dark:text-gray-200 block mb-1">Unit</label>
+            <input id="goal-unit" name="unit" placeholder="₹ / kg / days" className="mt-1 w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-900 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900" />
           </div>
 
           <div>
-            <label className="text-sm text-gray-700 dark:text-gray-200">Target date (optional)</label>
-            <input name="targetDate" type="date" className="mt-1 w-full rounded border px-3 py-2 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100" />
+            <label htmlFor="goal-target-date" className="text-sm font-medium text-gray-700 dark:text-gray-200 block mb-1">Target date (optional)</label>
+            <input id="goal-target-date" name="targetDate" type="date" className="mt-1 w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-900 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900" />
           </div>
 
           <div className="md:col-span-2">
             <Button type="submit" variant="primary" className="rounded">Create goal</Button>
           </div>
-        </form>
+          </div>
+        </FormSubmitWrapper>
       </div>
 
       <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
@@ -204,7 +211,7 @@ export default async function GoalsPage() {
                     </div>
 
                     <div className="mt-4 grid gap-2 md:grid-cols-[1fr_auto]">
-                      <form action={updateGoal} className="flex items-center gap-2">
+                      <form action={updateGoal} className="flex flex-col gap-2 sm:flex-row sm:items-center">
                         <input type="hidden" name="id" value={goal.id} />
                         <input
                           name="currentValue"
@@ -212,13 +219,13 @@ export default async function GoalsPage() {
                           step="0.01"
                           defaultValue={goal.currentValue ?? ''}
                           placeholder="Current"
-                          className="w-full rounded border px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+                          className="w-full min-w-0 rounded border px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100 sm:flex-1"
                         />
-                        <label className="inline-flex items-center gap-1 text-sm text-gray-700 dark:text-gray-200">
+                        <label className="inline-flex items-center gap-1 text-sm text-gray-700 dark:text-gray-200 sm:w-auto">
                           <input name="completed" type="checkbox" defaultChecked={goal.completed} />
                           Done
                         </label>
-                        <Button type="submit" variant="secondary" size="sm">Update</Button>
+                        <Button type="submit" variant="secondary" size="sm" className="w-full sm:w-auto">Update</Button>
                       </form>
 
                       <ConfirmDeleteForm

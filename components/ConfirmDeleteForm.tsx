@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useRef, useState } from 'react';
 import ConfirmDialog from './ConfirmDialog';
@@ -40,7 +40,7 @@ export default function ConfirmDeleteForm({
   return (
     <form ref={formRef} action={action} className="inline-flex">
       <input type="hidden" name={inputName} value={String(itemId)} />
-      <Button type="button" onClick={() => setIsOpen(true)} variant="ghost" className={triggerClassName}>
+      <Button type="button" onClick={() => setIsOpen(true)} aria-label={`${triggerLabel} item`} variant="ghost" className={triggerClassName}>
         {triggerLabel}
       </Button>
       <ConfirmDialog

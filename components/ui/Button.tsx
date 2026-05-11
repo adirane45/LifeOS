@@ -15,10 +15,10 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantClasses: Record<Variant, string> = {
-  primary: 'bg-primary text-white',
-  secondary: 'bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100',
-  ghost: 'bg-transparent text-primary',
-  danger: 'bg-danger text-white',
+  primary: 'bg-primary text-white focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900',
+  secondary: 'bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100 focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2 dark:focus-visible:ring-gray-100 dark:focus-visible:ring-offset-gray-900',
+  ghost: 'bg-transparent text-primary focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900',
+  danger: 'bg-danger text-white focus-visible:ring-2 focus-visible:ring-danger focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900',
 };
 
 const sizeClasses: Record<Size, string> = {

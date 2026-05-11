@@ -6,6 +6,7 @@ import EmptyState from '../../components/EmptyState';
 import ChartErrorBoundary from '../../components/ChartErrorBoundary';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
+import FormSubmitWrapper from '../../components/FormSubmitWrapper';
 import { getHealthMetrics } from '../../lib/data';
 import { CombinedHealthChart, WeightChart, SleepChart, MoodChart } from '../../components/HealthChartsClient';
 
@@ -45,18 +46,23 @@ export default async function HealthPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 className="text-2xl font-bold">Health</h2>
-          <p className="text-sm text-gray-500">Log and track your health metrics.</p>
+          <p className="text-sm text-gray-600 dark:text-gray-500">Log and track your health metrics.</p>
         </div>
-        <Button href="/api/export/health" download variant="secondary" className="inline-flex items-center justify-center">Export CSV</Button>
+        <Button href="/api/export/health" download aria-label="Export health metrics to CSV" variant="secondary" className="inline-flex items-center justify-center">Export CSV</Button>
       </div>
 
       <Card className="p-0">
         <div className="p-4">
           <h3 className="text-lg font-semibold">Log metric</h3>
-          <form id="log-metric" action={addMetric} className="mt-4 grid gap-3 md:grid-cols-3">
+          <FormSubmitWrapper 
+            action={addMetric}
+            successMessage="Health metric logged successfully"
+            errorMessage="Failed to log metric"
+          >
+            <div className="mt-4 grid gap-3 md:grid-cols-3">
             <div>
-              <label className="text-sm">Type</label>
-              <select name="type" className="mt-1 w-full rounded border px-3 py-2">
+              <label htmlFor="metric-type" className="text-sm font-medium text-gray-900 dark:text-gray-100 block mb-1">Type</label>
+              <select id="metric-type" name="type" className="mt-1 w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-700 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
                 <option>WEIGHT</option>
                 <option>SLEEP</option>
                 <option>HEART_RATE</option>
@@ -66,21 +72,22 @@ export default async function HealthPage() {
               </select>
             </div>
             <div>
-              <label className="text-sm">Value</label>
-              <input name="value" type="number" step="0.1" placeholder="e.g., 70.5" className="mt-1 w-full rounded border px-3 py-2" />
+              <label htmlFor="metric-value" className="text-sm font-medium text-gray-900 dark:text-gray-100 block mb-1">Value</label>
+              <input id="metric-value" name="value" type="number" step="0.1" placeholder="e.g., 70.5" className="mt-1 w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-700 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900" />
             </div>
             <div>
-              <label className="text-sm">Unit (optional)</label>
-              <input name="unit" placeholder="e.g., kg" className="mt-1 w-full rounded border px-3 py-2" />
+              <label htmlFor="metric-unit" className="text-sm font-medium text-gray-900 dark:text-gray-100 block mb-1">Unit (optional)</label>
+              <input id="metric-unit" name="unit" placeholder="e.g., kg" className="mt-1 w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-700 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900" />
             </div>
             <div>
-              <label className="text-sm">Date</label>
-              <input name="date" type="date" defaultValue={new Date().toISOString().slice(0, 10)} className="mt-1 w-full rounded border px-3 py-2" />
+              <label htmlFor="metric-date" className="text-sm font-medium text-gray-900 dark:text-gray-100 block mb-1">Date</label>
+              <input id="metric-date" name="date" type="date" defaultValue={new Date().toISOString().slice(0, 10)} className="mt-1 w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-700 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900" />
             </div>
             <div className="flex items-end">
               <Button type="submit" variant="primary">Log</Button>
             </div>
-          </form>
+            </div>
+          </FormSubmitWrapper>
         </div>
       </Card>
 
@@ -137,12 +144,13 @@ export default async function HealthPage() {
       <Card className="p-0">
         <div className="p-4">
           <h3 className="text-lg font-semibold">Recent entries</h3>
-          <ul className="mt-4 space-y-3">
+          <div className="mt-4 overflow-x-auto">
+          <ul className="min-w-[320px] space-y-3">
             {metrics.length === 0 ? (
               <EmptyState icon={<Heart />} title="No health data recorded." description="Start logging your health metrics." actionLabel="Log metric" actionHref="#log-metric" />
             ) : (
               metrics.map((m: any) => (
-                <li key={m.id} className="flex items-center justify-between">
+                <li key={m.id} className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <div className="text-sm font-medium">{m.type.replace('_', ' ').toLowerCase()}</div>
                     <div className="text-xs text-gray-500">{new Date(m.date).toLocaleString()}</div>
@@ -152,6 +160,7 @@ export default async function HealthPage() {
               ))
             )}
           </ul>
+          </div>
         </div>
       </Card>
     </section>

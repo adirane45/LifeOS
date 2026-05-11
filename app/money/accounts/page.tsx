@@ -55,12 +55,12 @@ export default async function AccountsPage() {
             <h3 className="text-lg font-semibold">Add account</h3>
             <form id="add-account" action={createAccount} className="mt-4 space-y-3">
             <div>
-              <label className="text-sm">Name</label>
-              <input name="name" className="mt-1 w-full rounded border px-3 py-2" />
+              <label htmlFor="account-name" className="text-sm font-medium text-gray-900 dark:text-gray-100 block mb-1">Name</label>
+              <input id="account-name" name="name" placeholder="e.g., Checking Account" className="mt-1 w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-700 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900" />
             </div>
             <div>
-              <label className="text-sm">Type</label>
-              <select name="type" className="mt-1 w-full rounded border px-3 py-2">
+              <label htmlFor="account-type" className="text-sm font-medium text-gray-900 dark:text-gray-100 block mb-1">Type</label>
+              <select id="account-type" name="type" className="mt-1 w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-700 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
                 <option>CHECKING</option>
                 <option>SAVINGS</option>
                 <option>CREDIT</option>
@@ -68,12 +68,12 @@ export default async function AccountsPage() {
               </select>
             </div>
             <div>
-              <label className="text-sm">Currency</label>
-              <input name="currency" defaultValue="USD" className="mt-1 w-full rounded border px-3 py-2" />
+              <label htmlFor="account-currency" className="text-sm font-medium text-gray-900 dark:text-gray-100 block mb-1">Currency</label>
+              <input id="account-currency" name="currency" defaultValue="USD" className="mt-1 w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-700 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900" />
             </div>
             <div>
-              <label className="text-sm">Initial balance</label>
-              <input name="initial" type="number" step="0.01" defaultValue="0" className="mt-1 w-full rounded border px-3 py-2" />
+              <label htmlFor="account-initial" className="text-sm font-medium text-gray-900 dark:text-gray-100 block mb-1">Initial balance</label>
+              <input id="account-initial" name="initial" type="number" step="0.01" defaultValue="0" className="mt-1 w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-700 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900" />
             </div>
             <div>
               <Button type="submit" variant="primary">Create</Button>
@@ -91,7 +91,7 @@ export default async function AccountsPage() {
               ) : (
                 <ul className="space-y-3">
                   {accounts.map((a: any) => (
-                    <li key={a.id} className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3">
+                    <li key={a.id} className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3 hover:bg-gray-100 hover:shadow-sm transition-all duration-200">
                       <div>
                         <div className="text-sm font-medium">{a.name}</div>
                         <div className="text-xs text-gray-500">{a.type} • {a.currency}</div>

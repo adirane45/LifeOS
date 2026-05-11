@@ -4,6 +4,7 @@ import { prisma } from '../lib/prisma';
 import { getAccounts, getGoals, getHealthMetrics, getHabits, getTransactions, getUser } from '../lib/data';
 import ChartErrorBoundary from '../components/ChartErrorBoundary';
 import ExpensesMiniChart from '../components/ExpensesMiniChartClient';
+import LastUpdatedTimestamp from '../components/LastUpdatedTimestamp';
 
 export const revalidate = 60;
 
@@ -285,14 +286,14 @@ export default async function Page() {
 
   if (safeAccounts.length === 0 && totalTransactionCount === 0 && safeHabitsTotal === 0 && safeRecentMetrics.length === 0 && safeActiveGoals.length === 0) {
     return (
-      <section className="space-y-6">
+      <section className="space-y-6 p-4">
         <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-8 text-center shadow-sm">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gray-50 dark:bg-gray-700 text-gray-400 dark:text-gray-500">
             <PlusCircle className="h-8 w-8" />
           </div>
           <h2 className="mt-5 text-2xl font-semibold text-gray-900 dark:text-gray-100">👋 Welcome to LifeOS! Start by adding an account, a habit, or a health metric.</h2>
           <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Use the quick actions below to get your dashboard moving.</p>
-          <div className="mt-6 grid gap-3 md:grid-cols-3">
+          <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {quickLinks.map((link) => (
               <Link
                 key={link.href}
@@ -313,16 +314,16 @@ export default async function Page() {
   }
 
   return (
-    <section className="space-y-6">
+    <section className="space-y-6 p-4">
       <div>
         <p className="text-sm uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">Dashboard</p>
         <h2 className="mt-2 text-3xl font-semibold text-gray-900 dark:text-gray-100">Welcome back, {user?.name ?? 'User'}</h2>
         <p className="mt-2 text-gray-600 dark:text-gray-400">Here is your LifeOS summary for today.</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
-          <div key={stat.label} className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm">
+          <div key={stat.label} className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
             <div className={`inline-flex rounded-xl bg-gradient-to-br ${stat.accent} p-3 text-white`}>
               <stat.icon className="h-5 w-5" />
             </div>
@@ -333,7 +334,7 @@ export default async function Page() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.6fr_1fr]">
-        <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm">
+        <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
           <div className="mb-4 flex items-center justify-between">
             <div>
               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Expenses last 7 days</h3>
@@ -353,7 +354,7 @@ export default async function Page() {
         </div>
 
         <div className="space-y-6">
-          <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm">
+          <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Quick add</h3>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Jump to the most common inputs.</p>
             <div className="mt-4 space-y-3">
@@ -373,7 +374,7 @@ export default async function Page() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm">
+          <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Budget alert</h3>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Most important monthly budget signal.</p>
             <div className="mt-4">
@@ -406,10 +407,10 @@ export default async function Page() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-2">
-        <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm">
+        <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Goal progress</h3>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Track your active goals from here.</p>
-          <div className="mt-4 space-y-3">
+          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
             {safeActiveGoals.length === 0 ? (
               <div className="flex h-[180px] flex-col items-center justify-center rounded-xl bg-gray-50 dark:bg-gray-700 text-center text-sm text-gray-500 dark:text-gray-400">
                 <Target className="h-8 w-8 text-gray-300 dark:text-gray-600" />
@@ -445,7 +446,7 @@ export default async function Page() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm">
+        <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Latest health metrics</h3>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Most recent entry for each metric type.</p>
           <div className="mt-4 space-y-3">
@@ -471,7 +472,7 @@ export default async function Page() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm">
+        <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Today&apos;s habit completion</h3>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             {todayHabitLogs === 0 ? 'No habit logs yet today.' : `${todayCompletedLogs} of ${todayHabitLogs} logs completed today.`}
@@ -481,6 +482,10 @@ export default async function Page() {
             <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Completion rate across all habits</p>
           </div>
         </div>
+      </div>
+
+      <div className="px-0">
+        <LastUpdatedTimestamp />
       </div>
     </section>
   );

@@ -162,8 +162,8 @@ export default async function BudgetsPage() {
           <h3 className="text-lg font-semibold">Create or update budget</h3>
           <form action={createOrUpdateBudget} className="mt-4 grid gap-3 md:grid-cols-3">
             <div>
-              <label className="text-sm">Category</label>
-              <input name="category" list="budget-categories" required placeholder="Food" className="mt-1 w-full rounded border px-3 py-2" />
+              <label htmlFor="budget-category" className="text-sm font-medium text-gray-900 dark:text-gray-100 block mb-1">Category</label>
+              <input id="budget-category" name="category" list="budget-categories" required placeholder="e.g., Food" className="mt-1 w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-700 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900" />
               <datalist id="budget-categories">
                 {categories.map((c) => (
                   <option key={c.category} value={c.category} />
@@ -171,12 +171,12 @@ export default async function BudgetsPage() {
               </datalist>
             </div>
             <div>
-              <label className="text-sm">Monthly amount</label>
-              <input name="amount" type="number" step="0.01" required className="mt-1 w-full rounded border px-3 py-2" />
+              <label htmlFor="budget-amount" className="text-sm font-medium text-gray-900 dark:text-gray-100 block mb-1">Monthly amount</label>
+              <input id="budget-amount" name="amount" type="number" step="0.01" required placeholder="0.00" className="mt-1 w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-700 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900" />
             </div>
             <div>
-              <label className="text-sm">Month</label>
-              <input name="month" type="month" defaultValue={toMonthInputValue(currentMonth)} required className="mt-1 w-full rounded border px-3 py-2" />
+              <label htmlFor="budget-month" className="text-sm font-medium text-gray-900 dark:text-gray-100 block mb-1">Month</label>
+              <input id="budget-month" name="month" type="month" defaultValue={toMonthInputValue(currentMonth)} required className="mt-1 w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-700 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900" />
             </div>
             <div className="md:col-span-3">
               <Button type="submit" variant="primary">Save budget</Button>
@@ -199,7 +199,7 @@ export default async function BudgetsPage() {
               {budgetRows.map(({ budget, spent, progress }) => {
                 const overspent = spent > budget.amount;
                 return (
-                  <li key={budget.id} className="rounded-xl bg-gray-50 p-4">
+                  <li key={budget.id} className="rounded-xl bg-gray-50 p-4 hover:bg-gray-100 hover:shadow-sm transition-all duration-200">
                     <div className="flex items-center justify-between gap-3">
                       <div>
                         <p className="text-sm font-medium">{budget.category}</p>
@@ -212,11 +212,11 @@ export default async function BudgetsPage() {
                       <div className={`h-2 rounded-full ${overspent ? 'bg-rose-500' : progress >= 80 ? 'bg-amber-500' : 'bg-emerald-500'}`} style={{ width: `${Math.min(progress, 100)}%` }} />
                     </div>
 
-                    <div className="mt-3 flex flex-wrap items-center gap-2">
-                      <form action={updateBudget} className="flex items-center gap-2">
+                    <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                      <form action={updateBudget} className="flex flex-col gap-2 sm:flex-row sm:items-center">
                         <input type="hidden" name="id" value={budget.id} />
-                        <input name="amount" type="number" step="0.01" defaultValue={budget.amount} className="w-32 rounded border px-2 py-1 text-sm" />
-                        <Button type="submit" variant="secondary" size="sm">Update</Button>
+                        <input name="amount" type="number" step="0.01" defaultValue={budget.amount} className="w-full rounded border px-2 py-1 text-sm sm:w-32" />
+                        <Button type="submit" variant="secondary" size="sm" className="w-full sm:w-auto">Update</Button>
                       </form>
 
                       <ConfirmDeleteForm

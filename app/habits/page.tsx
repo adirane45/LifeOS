@@ -8,6 +8,7 @@ import HabitHeatmap from '../../components/HabitHeatmap';
 import EmptyState from '../../components/EmptyState';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
+import FormSubmitWrapper from '../../components/FormSubmitWrapper';
 import { getHabits } from '../../lib/data';
 
 export const revalidate = 60;
@@ -62,33 +63,39 @@ export default async function HabitsPage({ searchParams }: { searchParams: Promi
     <section className="space-y-6 p-4">
       <div>
         <h2 className="text-2xl font-bold">Habits</h2>
-        <p className="text-sm text-gray-500">Track your daily and weekly habits.</p>
+        <p className="text-sm text-gray-600 dark:text-gray-500">Track your daily and weekly habits.</p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
         <Card className="p-0">
           <div className="p-4">
             <h3 className="text-lg font-semibold">Add habit</h3>
-            <form id="add-habit" action={addHabit} className="mt-4 space-y-3">
+            <FormSubmitWrapper 
+              action={addHabit}
+              successMessage="Habit created successfully"
+              errorMessage="Failed to create habit"
+            >
+            <div className="mt-4 space-y-3">
             <div>
-              <label className="text-sm">Name</label>
-              <input name="name" placeholder="e.g., Exercise" className="mt-1 w-full rounded border px-3 py-2" />
+              <label htmlFor="habit-name" className="text-sm font-medium text-gray-900 dark:text-gray-100 block mb-1">Name</label>
+              <input id="habit-name" name="name" placeholder="e.g., Exercise" className="mt-1 w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-700 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900" />
             </div>
             <div>
-              <label className="text-sm">Frequency</label>
-              <select name="frequency" className="mt-1 w-full rounded border px-3 py-2">
+              <label htmlFor="habit-frequency" className="text-sm font-medium text-gray-900 dark:text-gray-100 block mb-1">Frequency</label>
+              <select id="habit-frequency" name="frequency" className="mt-1 w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-700 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
                 <option>DAILY</option>
                 <option>WEEKLY</option>
               </select>
             </div>
             <div>
-              <label className="text-sm">Target count (per period)</label>
-              <input name="targetCount" type="number" defaultValue="1" className="mt-1 w-full rounded border px-3 py-2" />
+              <label htmlFor="habit-target" className="text-sm font-medium text-gray-900 dark:text-gray-100 block mb-1">Target count (per period)</label>
+              <input id="habit-target" name="targetCount" type="number" defaultValue="1" className="mt-1 w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-700 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900" />
             </div>
             <div>
               <Button type="submit" variant="primary">Add</Button>
             </div>
-          </form>
+            </div>
+          </FormSubmitWrapper>
           </div>
         </Card>
 

@@ -16,8 +16,8 @@ export default function LoginPage() {
 
         <form action={login} className="space-y-4">
           <div>
-            <label htmlFor="password" className="sr-only">Passkey</label>
-            <input id="password" name="password" type="password" required placeholder="Passkey" className="w-full px-4 py-2 border rounded focus:outline-none focus:ring" />
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">Passkey</label>
+            <input id="password" name="password" type="password" required placeholder="Enter your passkey" className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 transition-all" />
           </div>
 
           <div>

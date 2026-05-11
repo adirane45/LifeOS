@@ -14,6 +14,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ habitId
     // If no body or JSON parsing fails, use server timezone (undefined)
   }
 
+  // Log warning if timezone offset not provided
+  if (!timezoneOffsetMinutes) {
+    console.warn(`[Habit Toggle] No timezone offset provided for habit ${habitId}. Using server timezone.`);
+  }
+
   // Compute today's date in the user's timezone
   const now = new Date();
   const offsetMinutes = timezoneOffsetMinutes ?? -now.getTimezoneOffset();
