@@ -132,3 +132,36 @@ export async function getDefaultRemindAfterDays() {
     return 30;
   }
 }
+
+export async function markOnboardingCompleted() {
+  try {
+    const user = await getUser();
+    if (!user) throw new Error('Unauthorized');
+
+    const preferences = (user.preferences as any) || {};
+    preferences.onboardingCompleted = true;
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { preferences }
+    });
+
+    revalidatePath('/');
+  } catch (error) {
+    console.error('markOnboardingCompleted failed:', error);
+    throw error;
+  }
+}
+
+export async function getOnboardingStatus() {
+  try {
+    const user = await getUser();
+    if (!user) return false;
+
+    const preferences = (user.preferences as any) || {};
+    return preferences.onboardingCompleted === true;
+  } catch (error) {
+    console.error('getOnboardingStatus failed:', error);
+    return false;
+  }
+}

@@ -18,6 +18,7 @@
     "better-sqlite3": "^12.9.0",
     "clsx": "*",
     "cohere-ai": "^8.0.0",
+    "framer-motion": "^12.38.0",
     "lucide-react": "*",
     "next": "*",
     "openai": "^6.37.0",
