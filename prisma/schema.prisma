@@ -49,6 +49,7 @@ model User {
   splitGroups    SplitGroup[]
   investments    Investment[]
   assistantMessages AssistantMessage[]
+  suggestions     Suggestion[]
 }
 
 model Account {
@@ -243,4 +244,20 @@ model AssistantMessage {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
+}
+
+model Suggestion {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  text        String
+  icon        String
+  actionLabel String?
+  actionUrl   String?
+  date        DateTime @default(now())
+  dismissed   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, date])
 }

@@ -7,6 +7,10 @@ import ExpensesMiniChart from '../components/ExpensesMiniChartClient';
 import LastUpdatedTimestamp from '../components/LastUpdatedTimestamp';
 import { getContactAttentionAge, getNextBirthdayInfo } from '../lib/contactHelpers';
 import LastContactNotifier from '../components/LastContactNotifier';
+import DailyQuote from '../components/DailyQuote';
+import { getDailyQuote } from '../lib/quoteFetcher';
+import DashboardSuggestions from '../components/DashboardSuggestions';
+import { getDailySuggestions } from '../lib/suggestionEngine';
 
 export const dynamic = 'force-dynamic';
 
@@ -142,7 +146,8 @@ export default async function Page() {
     monthBudgets,
     monthExpenseTransactions,
     upcomingBills,
-    contacts
+    contacts,
+    dailyQuote
   ] = await Promise.all([
     getAccounts(user.id),
     prisma.transaction.count({ where: { account: { userId: user.id } } }).catch(() => 0),
@@ -192,8 +197,12 @@ export default async function Page() {
     }).catch(() => []),
     getTransactions(user.id, 200, 'asc', `EXPENSE||${thisMonthStart.toISOString()}|${thisMonthEnd.toISOString()}||0`).catch(() => []),
     getBills(user.id, 5, false).catch(() => []),
-    getContacts(user.id).catch(() => [])
+    getContacts(user.id).catch(() => []),
+    getDailyQuote()
   ]);
+
+  // Load daily suggestions (cached per-day in DB)
+  const suggestions = await getDailySuggestions(user.id).catch(() => []);
 
   // Build expense chart data safely (last 30 days)
   const safeExpenseTransactions = Array.isArray(expenseTransactions) ? expenseTransactions : [];
@@ -321,6 +330,10 @@ export default async function Page() {
   if (safeAccounts.length === 0 && totalTransactionCount === 0 && safeHabitsTotal === 0 && safeRecentMetrics.length === 0 && safeActiveGoals.length === 0) {
     return (
       <section className="space-y-6 p-4">
+        <DailyQuote initialQuote={dailyQuote} />
+        <div className="mt-4">
+          <DashboardSuggestions initial={suggestions} />
+        </div>
         <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-8 text-center shadow-sm">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gray-50 dark:bg-gray-700 text-gray-400 dark:text-gray-500">
             <PlusCircle className="h-8 w-8" />
@@ -354,6 +367,12 @@ export default async function Page() {
         <p className="text-sm uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">Dashboard</p>
         <h2 className="mt-2 text-3xl font-semibold text-gray-900 dark:text-gray-100">Welcome back, {user?.name ?? 'User'}</h2>
         <p className="mt-2 text-gray-600 dark:text-gray-400">Here is your LifeOS summary for today.</p>
+      </div>
+
+      <DailyQuote initialQuote={dailyQuote} />
+
+      <div className="mt-4">
+        <DashboardSuggestions initial={suggestions} />
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
