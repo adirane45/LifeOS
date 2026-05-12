@@ -7,7 +7,6 @@ import Card from '../../../components/ui/Card';
 import { getLivePrice, calculatePerformance } from '../../../lib/investmentApi';
 import InvestmentsClient from '../../../components/InvestmentsClient';
 
-export const revalidate = 60;
 export const dynamic = 'force-dynamic';
 
 export default async function InvestmentsPage() {

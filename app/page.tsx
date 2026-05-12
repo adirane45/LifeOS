@@ -8,7 +8,7 @@ import LastUpdatedTimestamp from '../components/LastUpdatedTimestamp';
 import { getContactAttentionAge, getNextBirthdayInfo } from '../lib/contactHelpers';
 import LastContactNotifier from '../components/LastContactNotifier';
 
-export const revalidate = 60;
+export const dynamic = 'force-dynamic';
 
 type LatestMetric = {
   type: string;

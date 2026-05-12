@@ -7,7 +7,7 @@ import Button from '../../../components/ui/Button';
 import Card from '../../../components/ui/Card';
 import { getTransactions, getUser } from '../../../lib/data';
 
-export const revalidate = 60;
+export const dynamic = 'force-dynamic';
 
 function monthStart(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), 1);

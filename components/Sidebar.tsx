@@ -1,6 +1,8 @@
 "use client";
 import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
 import { logout } from '../app/auth/serverActions';
+import { usePrefersReducedMotion } from '../lib/useMotionPreference';
 import {
   Home,
   DollarSign,
@@ -111,6 +113,8 @@ function SidebarContent({ closeOnNavigate, onClose }: { closeOnNavigate?: boolea
 }
 
 export default function Sidebar({ isMobileOpen, onClose }: { isMobileOpen?: boolean; onClose?: () => void }) {
+  const prefersReducedMotion = usePrefersReducedMotion();
+
   return (
     <>
       {/* Desktop static sidebar */}
@@ -120,21 +124,36 @@ export default function Sidebar({ isMobileOpen, onClose }: { isMobileOpen?: bool
 
       {/* Mobile overlay sidebar */}
       <div className="md:hidden">
-        {isMobileOpen ? (
-          <>
-            <div className="fixed inset-0 bg-black/50 z-40" onClick={() => onClose && onClose()} />
-            <div className={`fixed inset-y-0 left-0 z-50 w-64 transform transition-transform ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-              <div className="h-full p-4 bg-white dark:bg-gray-900">
-                <div className="flex justify-end">
-                  <Button onClick={() => onClose && onClose()} aria-label="Close sidebar" variant="ghost" size="sm" className="p-2">
-                    <X className="w-5 h-5 text-gray-700 dark:text-gray-200" />
-                  </Button>
+        <AnimatePresence>
+          {isMobileOpen && (
+            <>
+              <motion.div
+                className="fixed inset-0 bg-black/50 z-40"
+                onClick={() => onClose && onClose()}
+                initial={prefersReducedMotion ? {} : { opacity: 0 }}
+                animate={prefersReducedMotion ? {} : { opacity: 1 }}
+                exit={prefersReducedMotion ? {} : { opacity: 0 }}
+                transition={prefersReducedMotion ? {} : { duration: 0.2 }}
+              />
+              <motion.div
+                className="fixed inset-y-0 left-0 z-50 w-64"
+                initial={prefersReducedMotion ? {} : { x: '-100%' }}
+                animate={prefersReducedMotion ? {} : { x: 0 }}
+                exit={prefersReducedMotion ? {} : { x: '-100%' }}
+                transition={prefersReducedMotion ? {} : { type: 'spring', stiffness: 300, damping: 30 }}
+              >
+                <div className="h-full p-4 bg-white dark:bg-gray-900">
+                  <div className="flex justify-end">
+                    <Button onClick={() => onClose && onClose()} aria-label="Close sidebar" variant="ghost" size="sm" className="p-2">
+                      <X className="w-5 h-5 text-gray-700 dark:text-gray-200" />
+                    </Button>
+                  </div>
+                  <SidebarContent closeOnNavigate onClose={onClose} />
                 </div>
-                <SidebarContent closeOnNavigate onClose={onClose} />
-              </div>
-            </div>
-          </>
-        ) : null}
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
       </div>
     </>
   );

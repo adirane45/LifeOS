@@ -1,5 +1,9 @@
+'use client';
+
 import React from 'react';
+import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
+import { usePrefersReducedMotion } from '../../lib/useMotionPreference';
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
 type Size = 'sm' | 'md' | 'lg';
@@ -29,27 +33,38 @@ const sizeClasses: Record<Size, string> = {
 
 const Button = React.forwardRef<any, ButtonProps>(
   ({ variant = 'primary', size = 'md', loading = false, className = '', children, href, download, disabled, ...rest }, ref) => {
+    const prefersReducedMotion = usePrefersReducedMotion();
     const base = `inline-flex items-center justify-center rounded-md gap-2 transition filter`;
     const v = variantClasses[variant] || variantClasses.primary;
     const s = sizeClasses[size] || sizeClasses.md;
 
     if (href) {
       return (
-        <a ref={ref} href={href} download={download} className={`${base} ${v} ${s} ${className}`} {...(rest as any)}>
+        <motion.a
+          ref={ref}
+          href={href}
+          download={download}
+          className={`${base} ${v} ${s} ${className}`}
+          whileTap={prefersReducedMotion ? {} : { scale: 0.96 }}
+          transition={prefersReducedMotion ? {} : { type: 'spring', stiffness: 400, damping: 25 }}
+          {...(rest as any)}
+        >
           {loading ? <Loader2 className="animate-spin h-4 w-4" /> : children}
-        </a>
+        </motion.a>
       );
     }
 
     return (
-      <button
+      <motion.button
         ref={ref}
         className={`${base} ${v} ${s} ${className} ${disabled || loading ? 'opacity-60 pointer-events-none' : ''}`}
         disabled={disabled || loading}
-        {...rest}
+        whileTap={prefersReducedMotion ? {} : { scale: 0.96 }}
+        transition={prefersReducedMotion ? {} : { type: 'spring', stiffness: 400, damping: 25 }}
+        {...(rest as any)}
       >
         {loading ? <Loader2 className="animate-spin h-4 w-4" /> : children}
-      </button>
+      </motion.button>
     );
   }
 );

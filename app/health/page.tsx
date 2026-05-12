@@ -10,7 +10,7 @@ import FormSubmitWrapper from '../../components/FormSubmitWrapper';
 import { getHealthMetrics } from '../../lib/data';
 import { CombinedHealthChart, WeightChart, SleepChart, MoodChart } from '../../components/HealthChartsClient';
 
-export const revalidate = 60;
+export const dynamic = 'force-dynamic';
 
 export default async function HealthPage() {
   const userId = 1; // Hardcoded for now; use auth in production

@@ -8,6 +8,8 @@ import Card from '../../components/ui/Card';
 import FormSubmitWrapper from '../../components/FormSubmitWrapper';
 import { getGoals, getUser } from '../../lib/data';
 
+export const dynamic = 'force-dynamic';
+
 export const revalidate = 60;
 
 function clampPercent(value: number) {

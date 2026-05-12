@@ -1,5 +1,9 @@
+'use client';
+
 import React from 'react';
+import { motion } from 'framer-motion';
 import clsx from 'clsx';
+import { usePrefersReducedMotion } from '../../lib/useMotionPreference';
 
 type Accent = 'default' | 'blue' | 'green' | 'amber' | 'red';
 
@@ -19,8 +23,15 @@ const accentMap: Record<Accent, string> = {
 };
 
 export default function Card({ title, icon, accent = 'default', children, className, ...rest }: CardProps) {
+  const prefersReducedMotion = usePrefersReducedMotion();
+
   return (
-    <div className={clsx('rounded-xl border bg-white dark:bg-gray-900 dark:border-gray-800 shadow-sm overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-200', className)} {...rest}>
+    <motion.div
+      className={clsx('rounded-xl border bg-white dark:bg-gray-900 dark:border-gray-800 shadow-sm overflow-hidden', className)}
+      whileHover={prefersReducedMotion ? {} : { y: -4, boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)' }}
+      transition={prefersReducedMotion ? {} : { type: 'spring', stiffness: 400, damping: 25 }}
+      {...(rest as any)}
+    >
       <div className={clsx('h-1', accentMap[accent])} />
       <div className="p-4">
         {(title || icon) && (
@@ -31,6 +42,6 @@ export default function Card({ title, icon, accent = 'default', children, classN
         )}
         <div className="text-sm text-gray-700 dark:text-gray-300">{children}</div>
       </div>
-    </div>
+    </motion.div>
   );
 }

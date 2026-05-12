@@ -8,7 +8,7 @@ import Card from '../../../components/ui/Card';
 import { getAccounts, getUser } from '../../../lib/data';
 import { SUPPORTED_CURRENCIES } from '../../../lib/currency';
 
-export const revalidate = 60;
+export const dynamic = 'force-dynamic';
 
 export default async function AccountsPage() {
   let user = await getUser();

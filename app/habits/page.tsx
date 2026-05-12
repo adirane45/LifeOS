@@ -11,7 +11,7 @@ import Card from '../../components/ui/Card';
 import FormSubmitWrapper from '../../components/FormSubmitWrapper';
 import { getHabits } from '../../lib/data';
 
-export const revalidate = 60;
+export const dynamic = 'force-dynamic';
 
 function startOfDay(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());

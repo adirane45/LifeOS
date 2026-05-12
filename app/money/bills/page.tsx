@@ -8,7 +8,7 @@ import Button from '../../../components/ui/Button';
 import Card from '../../../components/ui/Card';
 import EmptyState from '../../../components/EmptyState';
 
-export const revalidate = 60;
+export const dynamic = 'force-dynamic';
 
 const DEFAULT_CATEGORIES = [
   'Rent',

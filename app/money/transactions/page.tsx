@@ -11,7 +11,7 @@ import RecurringTransactionsButton from '../../../components/RecurringTransactio
 import FormSubmitWrapper from '../../../components/FormSubmitWrapper';
 import { getAccounts, getTransactions, getUser } from '../../../lib/data';
 
-export const revalidate = 60;
+export const dynamic = 'force-dynamic';
 
 export default async function TransactionsPage({ searchParams }: { searchParams: Promise<{ account?: string; category?: string }> }) {
   const params = await searchParams;

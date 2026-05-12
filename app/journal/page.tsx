@@ -10,7 +10,7 @@ import Card from '../../components/ui/Card';
 import FormSubmitWrapper from '../../components/FormSubmitWrapper';
 import { getJournalEntries } from '../../lib/data';
 
-export const revalidate = 60;
+export const dynamic = 'force-dynamic';
 
 export default async function JournalPage() {
   const userId = 1; // Hardcoded for now; use auth in production

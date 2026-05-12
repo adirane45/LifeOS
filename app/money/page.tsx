@@ -7,7 +7,7 @@ import NetWorthChart from '../../components/NetWorthChartClient';
 import { convertAmount, formatCurrencyValue } from '../../lib/currency';
 import { getNetWorthHistory } from '../../lib/netWorthHistory';
 
-export const revalidate = 60;
+export const dynamic = 'force-dynamic';
 
 function monthStart(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), 1);

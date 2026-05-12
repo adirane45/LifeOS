@@ -6,7 +6,7 @@ import { normalizeImportantDates } from '../../lib/contactHelpers';
 import { getDefaultRemindAfterDays } from '../../lib/settingsActions';
 import { markContacted as markContactedAction } from './serverActions';
 
-export const revalidate = 60;
+export const dynamic = 'force-dynamic';
 
 function parseDateInput(value: FormDataEntryValue | null, fieldName: string) {
   const raw = String(value ?? '').trim();
