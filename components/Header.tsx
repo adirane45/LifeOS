@@ -1,6 +1,7 @@
 "use client";
 import { Menu } from 'lucide-react';
 import Button from './ui/Button';
+import NotificationBell from './NotificationBell';
 
 export default function Header({ onMenuClick, isMobileMenuOpen }: { onMenuClick?: () => void; isMobileMenuOpen?: boolean }) {
   return (
@@ -11,7 +12,10 @@ export default function Header({ onMenuClick, isMobileMenuOpen }: { onMenuClick?
         </Button>
         <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">Dashboard</div>
       </div>
-      <div className="text-sm text-gray-600 dark:text-gray-500">Welcome back</div>
+      <div className="flex items-center gap-3">
+        <div className="text-sm text-gray-600 dark:text-gray-500 hidden sm:block">Welcome back</div>
+        <NotificationBell />
+      </div>
     </header>
   );
 }

@@ -16,6 +16,7 @@
     "@tailwindcss/postcss": "^4.3.0",
     "autoprefixer": "*",
     "better-sqlite3": "^12.9.0",
+    "canvas-confetti": "^1.9.4",
     "clsx": "*",
     "cohere-ai": "^8.0.0",
     "framer-motion": "^12.38.0",
@@ -29,10 +30,13 @@
     "react-hot-toast": "^2.6.0",
     "recharts": "*",
     "tailwindcss": "*",
-    "typescript": "*"
+    "typescript": "*",
+    "web-push": "^3.6.7"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.13",
-    "@types/node": "25.6.2"
+    "@types/canvas-confetti": "^1.9.0",
+    "@types/node": "25.6.2",
+    "@types/web-push": "^3.6.4"
   }
 }

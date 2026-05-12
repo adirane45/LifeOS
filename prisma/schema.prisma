@@ -50,6 +50,8 @@ model User {
   investments    Investment[]
   assistantMessages AssistantMessage[]
   suggestions     Suggestion[]
+  pushSubscriptions PushSubscriptionModel[]
+  notificationLogs  NotificationLog[]
 }
 
 model Account {
@@ -244,6 +246,37 @@ model AssistantMessage {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
+}
+
+model PushSubscriptionModel {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model NotificationLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  type      String
+  entityId  String?
+  title     String
+  body      String
+  url       String?
+  read      Boolean  @default(false)
+  sentAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type, sentAt])
+  @@index([userId, read, sentAt])
+  @@index([userId, entityId])
 }
 
 model Suggestion {
