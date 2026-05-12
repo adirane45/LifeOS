@@ -48,6 +48,7 @@ model User {
   goals          Goal[]
   splitGroups    SplitGroup[]
   investments    Investment[]
+  assistantMessages AssistantMessage[]
 }
 
 model Account {
@@ -231,4 +232,15 @@ model Contact {
 
   @@index([userId])
   @@index([userId, name])
+}
+
+model AssistantMessage {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  role      String
+  content   String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
 }
