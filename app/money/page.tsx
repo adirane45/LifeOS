@@ -1,8 +1,8 @@
 import Link from 'next/link';
-import { ArrowDownRight, ArrowUpRight, PlusCircle, TrendingDown, Wallet } from 'lucide-react';
+import { AlertCircle, ArrowDownRight, ArrowUpRight, PlusCircle, TrendingDown, Wallet } from 'lucide-react';
 import { prisma } from '../../lib/prisma';
 import EmptyState from '../../components/EmptyState';
-import { getAccounts, getTransactions, getUser } from '../../lib/data';
+import { getAccounts, getBills, getTransactions, getUser } from '../../lib/data';
 import NetWorthChart from '../../components/NetWorthChartClient';
 
 export const revalidate = 60;
@@ -26,7 +26,7 @@ export default async function MoneyPage() {
   }
   const userId = user?.id;
 
-  const [accounts, recent, activeBudgets, monthExpenses] = await Promise.all([
+  const [accounts, recent, activeBudgets, monthExpenses, unpaidBills] = await Promise.all([
     getAccounts(userId),
     getTransactions(userId, 10, 'desc', '|||||1').catch(() => []),
     userId
@@ -43,7 +43,8 @@ export default async function MoneyPage() {
       : Promise.resolve([]),
     userId
       ? getTransactions(userId, 200, 'asc', `EXPENSE|||${start.toISOString()}|${end.toISOString()}||0`).catch(() => [])
-      : Promise.resolve([])
+      : Promise.resolve([]),
+    userId ? getBills(userId, 50, false).catch(() => []) : Promise.resolve([])
   ]);
 
   const spentByCategory = new Map<string, number>();
@@ -63,6 +64,8 @@ export default async function MoneyPage() {
     };
   });
 
+  const overdueBills = (Array.isArray(unpaidBills) ? unpaidBills : []).filter((bill: any) => new Date(bill.dueDate).getTime() < new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()).getTime());
+
   return (
     <section className="space-y-6 p-4">
       <div>
@@ -77,6 +80,21 @@ export default async function MoneyPage() {
           </Link>
         </div>
       </div>
+
+      {overdueBills.length > 0 ? (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-100">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
+            <div>
+              <p className="font-medium">{overdueBills.length} overdue bill{overdueBills.length === 1 ? '' : 's'} need attention.</p>
+              <p className="mt-1 text-xs text-amber-700 dark:text-amber-100/80">Open the Bills page to review due items and mark them paid.</p>
+            </div>
+          </div>
+          <Link href="/money/bills" className="mt-3 inline-flex text-sm font-medium text-amber-900 underline decoration-amber-500 underline-offset-4 dark:text-amber-50">
+            Review bills
+          </Link>
+        </div>
+      ) : null}
 
       <div className="rounded-2xl border border-gray-200 bg-white p-4">
         <div className="flex items-center justify-between">

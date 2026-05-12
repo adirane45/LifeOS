@@ -10,13 +10,13 @@ import {
   MessageSquare,
   Target,
   Settings as SettingsIcon,
-  X
+  X,
+  FileText
 } from 'lucide-react';
 import Button from './ui/Button';
 
-const nav = [
+const mainNav = [
   { name: 'Dashboard', href: '/', icon: Home },
-  { name: 'Money', href: '/money', icon: DollarSign },
   { name: 'Habits', href: '/habits', icon: CheckCircle },
   { name: 'Health', href: '/health', icon: Heart },
   { name: 'Journal', href: '/journal', icon: BookOpen },
@@ -25,26 +25,51 @@ const nav = [
   { name: 'Settings', href: '/settings', icon: SettingsIcon }
 ];
 
+const moneyNav = [
+  { name: 'Overview', href: '/money', icon: DollarSign },
+  { name: 'Accounts', href: '/money/accounts', icon: DollarSign },
+  { name: 'Transactions', href: '/money/transactions', icon: DollarSign },
+  { name: 'Budgets', href: '/money/budgets', icon: DollarSign },
+  { name: 'Bills', href: '/money/bills', icon: FileText }
+];
+
 function SidebarContent({ closeOnNavigate, onClose }: { closeOnNavigate?: boolean; onClose?: () => void }) {
   return (
     <div className="h-full p-4">
       <div className="mb-8 text-2xl font-bold text-gray-900 dark:text-gray-100">LifeOS</div>
       <nav className="space-y-1">
-        {nav.map((item) => (
+        {mainNav.map((item) => (
           <Link
             key={item.name}
             href={item.href}
             onClick={() => closeOnNavigate && onClose && onClose()}
-            className="flex items-center gap-3 p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800 transition-all"
+            className="flex items-center gap-3 rounded p-2 text-gray-800 transition-all hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:text-gray-200 dark:hover:bg-gray-700 dark:focus-visible:ring-offset-gray-800"
           >
-            <item.icon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            <item.icon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
             <span className="text-sm">{item.name}</span>
           </Link>
         ))}
       </nav>
 
+      <div className="mt-6">
+        <p className="px-2 text-xs font-semibold uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">Money</p>
+        <nav className="mt-2 space-y-1">
+          {moneyNav.map((item) => (
+            <Link
+              key={item.name}
+              href={item.href}
+              onClick={() => closeOnNavigate && onClose && onClose()}
+              className="flex items-center gap-3 rounded p-2 pl-4 text-gray-800 transition-all hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:text-gray-200 dark:hover:bg-gray-700 dark:focus-visible:ring-offset-gray-800"
+            >
+              <item.icon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+              <span className="text-sm">{item.name}</span>
+            </Link>
+          ))}
+        </nav>
+      </div>
+
       <form action={logout} className="mt-6">
-        <Button type="submit" variant="ghost" className="w-full text-left flex items-center gap-3 text-sm text-red-600 dark:text-red-400">
+        <Button type="submit" variant="ghost" className="flex w-full items-center gap-3 text-left text-sm text-red-600 dark:text-red-400">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7" />
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8v8" />

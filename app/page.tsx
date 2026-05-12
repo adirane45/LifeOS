@@ -1,7 +1,7 @@
 import Link from 'next/link';
-import { Wallet, PlusCircle, TrendingUp, HeartPulse, Target, CircleDollarSign, Activity, Circle, TrendingDown } from 'lucide-react';
+import { AlertCircle, Wallet, PlusCircle, TrendingUp, HeartPulse, Target, CircleDollarSign, Activity, Circle, TrendingDown } from 'lucide-react';
 import { prisma } from '../lib/prisma';
-import { getAccounts, getGoals, getHealthMetrics, getHabits, getTransactions, getUser } from '../lib/data';
+import { getAccounts, getBills, getGoals, getHealthMetrics, getHabits, getTransactions, getUser } from '../lib/data';
 import ChartErrorBoundary from '../components/ChartErrorBoundary';
 import ExpensesMiniChart from '../components/ExpensesMiniChartClient';
 import LastUpdatedTimestamp from '../components/LastUpdatedTimestamp';
@@ -93,6 +93,12 @@ function nextMonthStart(date: Date) {
   return new Date(date.getFullYear(), date.getMonth() + 1, 1);
 }
 
+function daysUntilDue(dueDate: Date) {
+  const today = startOfDay(new Date());
+  const due = startOfDay(new Date(dueDate));
+  return Math.round((due.getTime() - today.getTime()) / (24 * 60 * 60 * 1000));
+}
+
 export default async function Page() {
   // Fetch or create user (critical for dashboard to work)
   let user = await getUser();
@@ -132,7 +138,8 @@ export default async function Page() {
     expenseTransactions,
     activeGoals,
     monthBudgets,
-    monthExpenseTransactions
+    monthExpenseTransactions,
+    upcomingBills
   ] = await Promise.all([
     getAccounts(user.id),
     prisma.transaction.count({ where: { account: { userId: user.id } } }).catch(() => 0),
@@ -180,7 +187,8 @@ export default async function Page() {
       },
       orderBy: { category: 'asc' }
     }).catch(() => []),
-    getTransactions(user.id, 200, 'asc', `EXPENSE||${thisMonthStart.toISOString()}|${thisMonthEnd.toISOString()}||0`).catch(() => [])
+    getTransactions(user.id, 200, 'asc', `EXPENSE||${thisMonthStart.toISOString()}|${thisMonthEnd.toISOString()}||0`).catch(() => []),
+    getBills(user.id, 5, false).catch(() => [])
   ]);
 
   // Build expense chart data safely (last 30 days)
@@ -259,6 +267,7 @@ export default async function Page() {
   const safeActiveGoals = Array.isArray(activeGoals) ? activeGoals.filter((goal) => !goal.completed) : [];
   const safeMonthBudgets = Array.isArray(monthBudgets) ? monthBudgets : [];
   const safeMonthExpenses = Array.isArray(monthExpenseTransactions) ? monthExpenseTransactions : [];
+  const safeUpcomingBills = Array.isArray(upcomingBills) ? upcomingBills : [];
 
   const spentByCategory = new Map<string, number>();
   for (const tx of safeMonthExpenses) {
@@ -332,6 +341,44 @@ export default async function Page() {
           </div>
         ))}
       </div>
+
+      {safeUpcomingBills.length > 0 ? (
+        <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Upcoming Bills</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Unpaid bills due soon.</p>
+            </div>
+            <Link href="/money/bills" className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">Open bills</Link>
+          </div>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {safeUpcomingBills.map((bill: any) => {
+              const dueIn = daysUntilDue(bill.dueDate);
+              const overdue = dueIn < 0;
+              return (
+                <div key={bill.id} className={`rounded-2xl border p-4 ${overdue ? 'border-rose-200 bg-rose-50 dark:border-rose-500/40 dark:bg-rose-500/10' : 'border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-700/60'}`}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        {overdue ? <AlertCircle className="h-4 w-4 text-rose-600" /> : <TrendingDown className="h-4 w-4 text-amber-600" />}
+                        <p className="truncate text-sm font-semibold text-gray-900 dark:text-gray-100">{bill.name}</p>
+                      </div>
+                      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{bill.category}</p>
+                    </div>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{formatCurrency(bill.amount, currency)}</p>
+                  </div>
+                  <div className="mt-3 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                    <span>{new Date(bill.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                    <span className={overdue ? 'text-rose-600' : 'text-gray-500 dark:text-gray-400'}>
+                      {overdue ? `Overdue by ${Math.abs(dueIn)} day${Math.abs(dueIn) === 1 ? '' : 's'}` : dueIn === 0 ? 'Due today' : `${dueIn} day${dueIn === 1 ? '' : 's'} left`}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
 
       <div className="grid gap-6 xl:grid-cols-[1.6fr_1fr]">
         <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">

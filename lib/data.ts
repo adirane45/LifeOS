@@ -128,3 +128,28 @@ export const getGoals = cache(async (userId: number, take = 50) => {
     }
   });
 });
+
+export const getBills = cache(async (userId: number, take = 50, includePaid = true) => {
+  return prisma.bill.findMany({
+    where: {
+      userId,
+      ...(includePaid ? {} : { isPaid: false })
+    },
+    orderBy: [{ dueDate: 'asc' }, { createdAt: 'desc' }],
+    take,
+    select: {
+      id: true,
+      userId: true,
+      name: true,
+      amount: true,
+      dueDate: true,
+      frequency: true,
+      category: true,
+      isPaid: true,
+      paidDate: true,
+      notes: true,
+      createdAt: true,
+      updatedAt: true
+    }
+  });
+});
