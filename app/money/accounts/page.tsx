@@ -6,40 +6,63 @@ import ConfirmDeleteForm from '../../../components/ConfirmDeleteForm';
 import Button from '../../../components/ui/Button';
 import Card from '../../../components/ui/Card';
 import { getAccounts, getUser } from '../../../lib/data';
+import { SUPPORTED_CURRENCIES } from '../../../lib/currency';
 
 export const revalidate = 60;
 
 export default async function AccountsPage() {
   let user = await getUser();
   if (!user) {
-    user = await prisma.user.create({ data: { name: 'Me', email: 'me@lifeos.local' }, select: { id: true, name: true, email: true } });
+    user = await prisma.user.create({ data: { name: 'Me', email: 'me@lifeos.local' }, select: { id: true, name: true, email: true, preferences: true } });
   }
 
   const accounts = await getAccounts(user.id);
+  
+  // Get user's base currency preference
+  const preferences = (user.preferences as any) || {};
+  const baseCurrency = preferences.baseCurrency || 'USD';
 
   async function createAccount(formData: FormData) {
     'use server';
-    const name = String(formData.get('name') ?? '');
-    const type = String(formData.get('type') ?? 'CHECKING') as any;
-    const currency = String(formData.get('currency') ?? 'USD');
-    const initial = parseFloat(String(formData.get('initial') ?? '0')) || 0;
+    try {
+      const name = String(formData.get('name') ?? '').trim();
+      const type = String(formData.get('type') ?? 'CHECKING') as any;
+      const currency = String(formData.get('currency') ?? baseCurrency);
+      const initial = parseFloat(String(formData.get('initial') ?? '0')) || 0;
 
-    await prisma.account.create({ data: { name, type, currency, balance: initial, userId: user.id } });
-    revalidatePath('/money');
-    revalidatePath('/money/accounts');
-    revalidatePath('/money/transactions');
+      // Validation
+      if (!name) throw new Error('Account name is required');
+      if (initial < 0) throw new Error('Initial balance cannot be negative');
+
+      await prisma.account.create({ data: { name, type, currency, balance: initial, userId: user.id } });
+      
+      revalidatePath('/money');
+      revalidatePath('/money/accounts');
+      revalidatePath('/money/transactions');
+    } catch (error) {
+      console.error('createAccount failed:', error);
+      throw error;
+    }
   }
 
   async function deleteAccount(formData: FormData) {
     'use server';
-    const id = Number(formData.get('id'));
-    await prisma.$transaction(async (tx: any) => {
-      await tx.transaction.deleteMany({ where: { accountId: id } });
-      await tx.account.delete({ where: { id } });
-    });
-    revalidatePath('/money');
-    revalidatePath('/money/accounts');
-    revalidatePath('/money/transactions');
+    try {
+      const id = Number(formData.get('id'));
+      if (!id || id <= 0) throw new Error('Invalid account ID');
+
+      await prisma.$transaction(async (tx: any) => {
+        await tx.transaction.deleteMany({ where: { accountId: id } });
+        await tx.account.delete({ where: { id } });
+      });
+
+      revalidatePath('/money');
+      revalidatePath('/money/accounts');
+      revalidatePath('/money/transactions');
+    } catch (error) {
+      console.error('deleteAccount failed:', error);
+      throw error;
+    }
   }
 
   return (
@@ -69,7 +92,13 @@ export default async function AccountsPage() {
             </div>
             <div>
               <label htmlFor="account-currency" className="text-sm font-medium text-gray-900 dark:text-gray-100 block mb-1">Currency</label>
-              <input id="account-currency" name="currency" defaultValue="USD" className="mt-1 w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-700 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900" />
+              <select id="account-currency" name="currency" defaultValue={baseCurrency} className="mt-1 w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 dark:bg-gray-700 dark:text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900">
+                {SUPPORTED_CURRENCIES.map((currency) => (
+                  <option key={currency} value={currency}>
+                    {currency}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label htmlFor="account-initial" className="text-sm font-medium text-gray-900 dark:text-gray-100 block mb-1">Initial balance</label>

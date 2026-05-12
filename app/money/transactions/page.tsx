@@ -32,39 +32,63 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
 
   async function createTransaction(formData: FormData) {
     'use server';
-    const accountId = Number(formData.get('accountId'));
-    const type = String(formData.get('type')) as 'INCOME' | 'EXPENSE';
-    const amount = parseFloat(String(formData.get('amount')) || '0');
-    const category = String(formData.get('category') || '');
-    const description = String(formData.get('description') || '');
-    const date = new Date(String(formData.get('date') || new Date().toISOString()));
-    const isRecurring = Boolean(formData.get('isRecurring'));
-    const recurrenceRule = String(formData.get('recurrenceRule') || '') || null;
-    const recurrenceEndDateValue = String(formData.get('recurrenceEndDate') || '');
-    const recurrenceEndDate = recurrenceEndDateValue ? new Date(recurrenceEndDateValue) : null;
+    try {
+      const accountId = Number(formData.get('accountId'));
+      const type = String(formData.get('type')) as 'INCOME' | 'EXPENSE';
+      const amount = parseFloat(String(formData.get('amount')) || '0');
+      const category = String(formData.get('category') || '').trim();
+      const description = String(formData.get('description') || '').trim();
+      const date = new Date(String(formData.get('date') || new Date().toISOString()));
+      const isRecurring = Boolean(formData.get('isRecurring'));
+      const recurrenceRule = String(formData.get('recurrenceRule') || '') || null;
+      const recurrenceEndDateValue = String(formData.get('recurrenceEndDate') || '');
+      const recurrenceEndDate = recurrenceEndDateValue ? new Date(recurrenceEndDateValue) : null;
 
-    await createTransactionAndUpdateBalance({ accountId, amount, category, description, date, type, isRecurring, recurrenceRule, recurrenceEndDate });
-    revalidatePath('/money');
-    revalidatePath('/money/transactions');
+      // Validation
+      if (!accountId || accountId <= 0) throw new Error('Valid account required');
+      if (!['INCOME', 'EXPENSE'].includes(type)) throw new Error('Invalid transaction type');
+      if (amount <= 0) throw new Error('Amount must be greater than 0');
+      if (!category) throw new Error('Category required');
+      if (isNaN(date.getTime())) throw new Error('Invalid date');
+
+      await createTransactionAndUpdateBalance({ accountId, amount, category, description, date, type, isRecurring, recurrenceRule, recurrenceEndDate });
+      revalidatePath('/money');
+      revalidatePath('/money/transactions');
+    } catch (error) {
+      console.error('createTransaction failed:', error);
+      throw error;
+    }
   }
 
   async function runRecurring(formData: FormData) {
     'use server';
-    // allow only when CRON_SECRET is set or in dev
-    if (!process.env.CRON_SECRET && process.env.NODE_ENV === 'production') {
-      throw new Error('Not allowed');
+    try {
+      // allow only when CRON_SECRET is set or in dev
+      if (!process.env.CRON_SECRET && process.env.NODE_ENV === 'production') {
+        throw new Error('Not allowed');
+      }
+      await processRecurringTransactions();
+      revalidatePath('/money');
+      revalidatePath('/money/transactions');
+    } catch (error) {
+      console.error('runRecurring failed:', error);
+      throw error;
     }
-    await processRecurringTransactions();
-    revalidatePath('/money');
-    revalidatePath('/money/transactions');
   }
 
   async function deleteTransaction(formData: FormData) {
     'use server';
-    const id = Number(formData.get('id'));
-    await deleteTransactionAndRevertBalance(id);
-    revalidatePath('/money');
-    revalidatePath('/money/transactions');
+    try {
+      const id = Number(formData.get('id'));
+      if (!id || id <= 0) throw new Error('Invalid transaction ID');
+      
+      await deleteTransactionAndRevertBalance(id);
+      revalidatePath('/money');
+      revalidatePath('/money/transactions');
+    } catch (error) {
+      console.error('deleteTransaction failed:', error);
+      throw error;
+    }
   }
 
   return (

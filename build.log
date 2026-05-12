@@ -1,0 +1,23 @@
+
+> lifeos@0.1.0 build
+> next build
+
+Γû▓ Next.js 16.2.6 (Turbopack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+Γ£ô Compiled successfully in 20.8s
+  Running TypeScript ...
+Failed to type check.
+
+./app/contacts/reminders/page.tsx:41:14
+Type error: Parameter 'contact' implicitly has an 'any' type.
+
+  39 |       };
+  40 |     })
+> 41 |     .filter((contact): contact is NonNullable<typeof contact> => contact !== null)
+     |              ^
+  42 |     .sort((a, b) => {
+  43 |       const left = a.overdueDays;
+  44 |       const right = b.overdueDays;
+Next.js build worker exited with code: 1 and signal: null

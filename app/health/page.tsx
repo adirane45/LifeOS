@@ -26,15 +26,25 @@ export default async function HealthPage() {
 
   async function addMetric(formData: FormData) {
     'use server';
-    const type = String(formData.get('type') ?? 'WEIGHT') as any;
-    const value = parseFloat(String(formData.get('value') ?? '0')) || 0;
-    const unit = String(formData.get('unit') ?? '');
-    const date = new Date(String(formData.get('date') ?? new Date().toISOString()));
+    try {
+      const type = String(formData.get('type') ?? 'WEIGHT') as any;
+      const value = parseFloat(String(formData.get('value') ?? '0')) || 0;
+      const unit = String(formData.get('unit') ?? '').trim();
+      const date = new Date(String(formData.get('date') ?? new Date().toISOString()));
 
-    await prisma.healthMetric.create({
-      data: { userId, type, value, unit: unit || null, date }
-    });
-    revalidatePath('/health');
+      // Validation
+      if (!['WEIGHT', 'SLEEP', 'MOOD', 'BLOOD_PRESSURE', 'HEART_RATE'].includes(type)) throw new Error('Invalid metric type');
+      if (value <= 0) throw new Error('Value must be greater than 0');
+      if (isNaN(date.getTime())) throw new Error('Invalid date');
+
+      await prisma.healthMetric.create({
+        data: { userId, type, value, unit: unit || null, date }
+      });
+      revalidatePath('/health');
+    } catch (error) {
+      console.error('addMetric failed:', error);
+      throw error;
+    }
   }
 
   const weightMetrics = metricsGrouped.get('WEIGHT') || [];

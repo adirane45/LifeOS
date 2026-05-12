@@ -25,36 +25,63 @@ export default async function JournalPage() {
 
   async function addEntry(formData: FormData) {
     'use server';
-    const title = String(formData.get('title') ?? '');
-    const content = String(formData.get('content') ?? '');
-    const mood = String(formData.get('mood') ?? '');
-    const date = new Date(String(formData.get('date') ?? new Date().toISOString()));
+    try {
+      const title = String(formData.get('title') ?? '').trim();
+      const content = String(formData.get('content') ?? '').trim();
+      const mood = String(formData.get('mood') ?? '');
+      const date = new Date(String(formData.get('date') ?? new Date().toISOString()));
 
-    await prisma.journalEntry.create({
-      data: { userId, title, content, mood: mood || null, date }
-    });
-    revalidatePath('/journal');
+      // Validation
+      if (!title) throw new Error('Journal title is required');
+      if (!content) throw new Error('Journal content is required');
+      if (isNaN(date.getTime())) throw new Error('Invalid date');
+
+      await prisma.journalEntry.create({
+        data: { userId, title, content, mood: mood || null, date }
+      });
+      revalidatePath('/journal');
+    } catch (error) {
+      console.error('addEntry failed:', error);
+      throw error;
+    }
   }
 
   async function updateEntry(formData: FormData) {
     'use server';
-    const id = Number(formData.get('id'));
-    const title = String(formData.get('title') ?? '');
-    const content = String(formData.get('content') ?? '');
-    const mood = String(formData.get('mood') ?? '');
+    try {
+      const id = Number(formData.get('id'));
+      const title = String(formData.get('title') ?? '').trim();
+      const content = String(formData.get('content') ?? '').trim();
+      const mood = String(formData.get('mood') ?? '');
 
-    await prisma.journalEntry.update({
-      where: { id },
-      data: { title, content, mood: mood || null }
-    });
-    revalidatePath('/journal');
+      // Validation
+      if (!id || id <= 0) throw new Error('Invalid entry ID');
+      if (!title) throw new Error('Journal title is required');
+      if (!content) throw new Error('Journal content is required');
+
+      await prisma.journalEntry.update({
+        where: { id },
+        data: { title, content, mood: mood || null }
+      });
+      revalidatePath('/journal');
+    } catch (error) {
+      console.error('updateEntry failed:', error);
+      throw error;
+    }
   }
 
   async function deleteEntry(formData: FormData) {
     'use server';
-    const id = Number(formData.get('id'));
-    await prisma.journalEntry.delete({ where: { id } });
-    revalidatePath('/journal');
+    try {
+      const id = Number(formData.get('id'));
+      if (!id || id <= 0) throw new Error('Invalid entry ID');
+
+      await prisma.journalEntry.delete({ where: { id } });
+      revalidatePath('/journal');
+    } catch (error) {
+      console.error('deleteEntry failed:', error);
+      throw error;
+    }
   }
 
   return (

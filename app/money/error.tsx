@@ -1,0 +1,39 @@
+'use client';
+
+import { useEffect } from 'react';
+import Button from '../../components/ui/Button';
+import Card from '../../components/ui/Card';
+import { AlertCircle } from 'lucide-react';
+
+export default function Error({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+  useEffect(() => {
+    console.error('Money error:', error);
+  }, [error]);
+
+  return (
+    <section className="space-y-6 p-4">
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Money</h2>
+        <p className="text-sm text-gray-600 dark:text-gray-500">Manage your finances</p>
+      </div>
+      <Card>
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="h-6 w-6 text-red-600 dark:text-red-400" />
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Unable to load money data</h3>
+          </div>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            {error.message || 'An error occurred while loading your financial data. Please try again.'}
+          </p>
+          {error.digest && <p className="text-xs text-gray-500">Error ID: {error.digest}</p>}
+          <div className="flex gap-3 pt-2">
+            <Button onClick={() => reset()}>Try Again</Button>
+            <Button onClick={() => window.location.href = '/money'} variant="secondary">
+              Reload Page
+            </Button>
+          </div>
+        </div>
+      </Card>
+    </section>
+  );
+}

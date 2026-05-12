@@ -39,12 +39,15 @@ model User {
   email          String          @unique
   preferences    Json?
   accounts       Account[]
+  contacts       Contact[]
   budgets        Budget[]
   bills          Bill[]
   habits         Habit[]
   healthMetrics  HealthMetric[]
   journalEntries JournalEntry[]
   goals          Goal[]
+  splitGroups    SplitGroup[]
+  investments    Investment[]
 }
 
 model Account {
@@ -153,4 +156,79 @@ model Goal {
   currentValue Float?
   unit        String?
   user        User     @relation(fields: [userId], references: [id])
+}
+
+model SplitGroup {
+  id          Int          @id @default(autoincrement())
+  userId      Int
+  name        String
+  totalAmount Float        @default(0)
+  createdAt   DateTime     @default(now())
+  user        User         @relation(fields: [userId], references: [id])
+  shares      SplitShare[]
+
+  @@index([userId])
+}
+
+model SplitShare {
+  id           Int        @id @default(autoincrement())
+  splitGroupId Int
+  personName   String
+  amount       Float
+  settled      Boolean    @default(false)
+  group        SplitGroup @relation(fields: [splitGroupId], references: [id], onDelete: Cascade)
+
+  @@index([splitGroupId])
+}
+
+model Investment {
+  id           Int                      @id @default(autoincrement())
+  userId       Int
+  name         String
+  symbol       String
+  type         String                   // "STOCK", "MUTUAL_FUND", "CRYPTO", "ETF", "BOND", "REAL_ESTATE", "OTHER"
+  quantity     Float
+  buyPrice     Float
+  currency     String                   @default("USD")
+  accountId    Int?
+  notes        String?
+  createdAt    DateTime                 @default(now())
+  updatedAt    DateTime                 @updatedAt
+  user         User                     @relation(fields: [userId], references: [id])
+  transactions InvestmentTransaction[]
+
+  @@index([userId])
+}
+
+model InvestmentTransaction {
+  id           Int        @id @default(autoincrement())
+  investmentId Int
+  type         String     // "BUY", "SELL", "DIVIDEND"
+  quantity     Float
+  price        Float
+  date         DateTime
+  notes        String?
+  investment   Investment @relation(fields: [investmentId], references: [id], onDelete: Cascade)
+
+  @@index([investmentId])
+}
+
+model Contact {
+  id               Int      @id @default(autoincrement())
+  userId           Int
+  name             String
+  relationship     String?
+  birthday         DateTime?
+  phone            String?
+  email            String?
+  notes            String?
+  importantDates   Json?
+  lastContacted    DateTime?
+  remindAfterDays  Int      @default(30)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, name])
 }

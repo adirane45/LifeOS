@@ -49,14 +49,24 @@ export default async function HabitsPage({ searchParams }: { searchParams: Promi
 
   async function addHabit(formData: FormData) {
     'use server';
-    const name = String(formData.get('name') ?? '');
-    const frequency = String(formData.get('frequency') ?? 'DAILY') as any;
-    const targetCount = Number(formData.get('targetCount') ?? 1);
+    try {
+      const name = String(formData.get('name') ?? '').trim();
+      const frequency = String(formData.get('frequency') ?? 'DAILY') as any;
+      const targetCount = Number(formData.get('targetCount') ?? 1);
 
-    await prisma.habit.create({
-      data: { userId, name, frequency, targetCount }
-    });
-    revalidatePath('/habits');
+      // Validation
+      if (!name) throw new Error('Habit name is required');
+      if (!['DAILY', 'WEEKLY', 'MONTHLY'].includes(frequency)) throw new Error('Invalid frequency');
+      if (targetCount <= 0) throw new Error('Target count must be greater than 0');
+
+      await prisma.habit.create({
+        data: { userId, name, frequency, targetCount }
+      });
+      revalidatePath('/habits');
+    } catch (error) {
+      console.error('addHabit failed:', error);
+      throw error;
+    }
   }
 
   return (

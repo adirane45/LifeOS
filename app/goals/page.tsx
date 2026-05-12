@@ -49,63 +49,81 @@ export default async function GoalsPage() {
 
   async function createGoal(formData: FormData) {
     'use server';
-    const title = String(formData.get('title') || '').trim();
-    const description = String(formData.get('description') || '').trim();
-    const category = String(formData.get('category') || 'OTHER').toUpperCase();
-    const targetValueStr = String(formData.get('targetValue') || '').trim();
-    const currentValueStr = String(formData.get('currentValue') || '').trim();
-    const unit = String(formData.get('unit') || '').trim();
-    const targetDateStr = String(formData.get('targetDate') || '').trim();
+    try {
+      const title = String(formData.get('title') || '').trim();
+      const description = String(formData.get('description') || '').trim();
+      const category = String(formData.get('category') || 'OTHER').toUpperCase();
+      const targetValueStr = String(formData.get('targetValue') || '').trim();
+      const currentValueStr = String(formData.get('currentValue') || '').trim();
+      const unit = String(formData.get('unit') || '').trim();
+      const targetDateStr = String(formData.get('targetDate') || '').trim();
 
-    if (!title) return;
+      // Validation
+      if (!title) throw new Error('Goal title is required');
+      if (!['FINANCE', 'HABIT', 'HEALTH', 'OTHER'].includes(category)) throw new Error('Invalid category');
 
-    await prisma.goal.create({
-      data: {
-        userId: user.id,
-        title,
-        description: description || null,
-        category,
-        targetValue: targetValueStr ? Number(targetValueStr) : null,
-        currentValue: currentValueStr ? Number(currentValueStr) : null,
-        unit: unit || null,
-        targetDate: targetDateStr ? new Date(targetDateStr) : null,
-        completed: false
-      }
-    });
+      await prisma.goal.create({
+        data: {
+          userId: user.id,
+          title,
+          description: description || null,
+          category,
+          targetValue: targetValueStr ? Number(targetValueStr) : null,
+          currentValue: currentValueStr ? Number(currentValueStr) : null,
+          unit: unit || null,
+          targetDate: targetDateStr ? new Date(targetDateStr) : null,
+          completed: false
+        }
+      });
 
-    revalidatePath('/goals');
-    revalidatePath('/');
+      revalidatePath('/goals');
+      revalidatePath('/');
+    } catch (error) {
+      console.error('createGoal failed:', error);
+      throw error;
+    }
   }
 
   async function updateGoal(formData: FormData) {
     'use server';
-    const id = Number(formData.get('id'));
-    const currentValueStr = String(formData.get('currentValue') || '').trim();
-    const completed = Boolean(formData.get('completed'));
+    try {
+      const id = Number(formData.get('id'));
+      const currentValueStr = String(formData.get('currentValue') || '').trim();
+      const completed = Boolean(formData.get('completed'));
 
-    if (!id) return;
+      // Validation
+      if (!id || id <= 0) throw new Error('Invalid goal ID');
 
-    await prisma.goal.update({
-      where: { id },
-      data: {
-        currentValue: currentValueStr ? Number(currentValueStr) : null,
-        completed
-      }
-    });
+      await prisma.goal.update({
+        where: { id },
+        data: {
+          currentValue: currentValueStr ? Number(currentValueStr) : null,
+          completed
+        }
+      });
 
-    revalidatePath('/goals');
-    revalidatePath('/');
+      revalidatePath('/goals');
+      revalidatePath('/');
+    } catch (error) {
+      console.error('updateGoal failed:', error);
+      throw error;
+    }
   }
 
   async function deleteGoal(formData: FormData) {
     'use server';
-    const id = Number(formData.get('id'));
-    if (!id) return;
+    try {
+      const id = Number(formData.get('id'));
+      if (!id || id <= 0) throw new Error('Invalid goal ID');
 
-    await prisma.goal.delete({ where: { id } });
+      await prisma.goal.delete({ where: { id } });
 
-    revalidatePath('/goals');
-    revalidatePath('/');
+      revalidatePath('/goals');
+      revalidatePath('/');
+    } catch (error) {
+      console.error('deleteGoal failed:', error);
+      throw error;
+    }
   }
 
   const goals = await getGoals(user.id, 100);

@@ -1,10 +1,12 @@
 import Link from 'next/link';
-import { AlertCircle, Wallet, PlusCircle, TrendingUp, HeartPulse, Target, CircleDollarSign, Activity, Circle, TrendingDown } from 'lucide-react';
+import { AlertCircle, Wallet, PlusCircle, TrendingUp, HeartPulse, Target, CircleDollarSign, Activity, Circle, TrendingDown, CalendarDays } from 'lucide-react';
 import { prisma } from '../lib/prisma';
-import { getAccounts, getBills, getGoals, getHealthMetrics, getHabits, getTransactions, getUser } from '../lib/data';
+import { getAccounts, getBills, getContacts, getGoals, getHealthMetrics, getHabits, getTransactions, getUser } from '../lib/data';
 import ChartErrorBoundary from '../components/ChartErrorBoundary';
 import ExpensesMiniChart from '../components/ExpensesMiniChartClient';
 import LastUpdatedTimestamp from '../components/LastUpdatedTimestamp';
+import { getContactAttentionAge, getNextBirthdayInfo } from '../lib/contactHelpers';
+import LastContactNotifier from '../components/LastContactNotifier';
 
 export const revalidate = 60;
 
@@ -139,7 +141,8 @@ export default async function Page() {
     activeGoals,
     monthBudgets,
     monthExpenseTransactions,
-    upcomingBills
+    upcomingBills,
+    contacts
   ] = await Promise.all([
     getAccounts(user.id),
     prisma.transaction.count({ where: { account: { userId: user.id } } }).catch(() => 0),
@@ -188,7 +191,8 @@ export default async function Page() {
       orderBy: { category: 'asc' }
     }).catch(() => []),
     getTransactions(user.id, 200, 'asc', `EXPENSE||${thisMonthStart.toISOString()}|${thisMonthEnd.toISOString()}||0`).catch(() => []),
-    getBills(user.id, 5, false).catch(() => [])
+    getBills(user.id, 5, false).catch(() => []),
+    getContacts(user.id).catch(() => [])
   ]);
 
   // Build expense chart data safely (last 30 days)
@@ -268,6 +272,27 @@ export default async function Page() {
   const safeMonthBudgets = Array.isArray(monthBudgets) ? monthBudgets : [];
   const safeMonthExpenses = Array.isArray(monthExpenseTransactions) ? monthExpenseTransactions : [];
   const safeUpcomingBills = Array.isArray(upcomingBills) ? upcomingBills : [];
+  const safeContacts = Array.isArray(contacts) ? contacts : [];
+
+  const upcomingBirthdays = safeContacts
+    .map((contact: any) => {
+      const birthdayInfo = getNextBirthdayInfo(contact.birthday, now);
+      return birthdayInfo ? { contact, birthdayInfo } : null;
+    })
+    .filter((entry): entry is { contact: any; birthdayInfo: NonNullable<ReturnType<typeof getNextBirthdayInfo>> } => entry !== null)
+    .filter((entry) => entry.birthdayInfo.daysUntil <= 7)
+    .sort((a, b) => a.birthdayInfo.daysUntil - b.birthdayInfo.daysUntil)
+    .slice(0, 5);
+
+  const needsAttentionContacts = safeContacts
+    .map((contact: any) => {
+      const daysSince = getContactAttentionAge(contact, now);
+      return daysSince === null ? null : { contact, daysSince };
+    })
+    .filter((entry): entry is { contact: any; daysSince: number } => entry !== null)
+    .filter((entry) => entry.daysSince > (entry.contact.remindAfterDays ?? 30))
+    .sort((a, b) => b.daysSince - a.daysSince)
+    .slice(0, 3);
 
   const spentByCategory = new Map<string, number>();
   for (const tx of safeMonthExpenses) {
@@ -324,6 +349,7 @@ export default async function Page() {
 
   return (
     <section className="space-y-6 p-4">
+      <LastContactNotifier overdueCount={needsAttentionContacts.length} />
       <div>
         <p className="text-sm uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">Dashboard</p>
         <h2 className="mt-2 text-3xl font-semibold text-gray-900 dark:text-gray-100">Welcome back, {user?.name ?? 'User'}</h2>
@@ -340,6 +366,68 @@ export default async function Page() {
             <p className="mt-2 text-2xl font-semibold text-gray-900 dark:text-gray-100">{stat.value}</p>
           </div>
         ))}
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-2">
+        <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Upcoming Birthdays</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Birthdays in the next 7 days.</p>
+            </div>
+            <Link href="/contacts" className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">Open contacts</Link>
+          </div>
+          <div className="mt-4 space-y-3">
+            {upcomingBirthdays.length === 0 ? (
+              <div className="flex h-[140px] flex-col items-center justify-center rounded-xl bg-gray-50 dark:bg-gray-700 text-center text-sm text-gray-500 dark:text-gray-400">
+                <CalendarDays className="h-8 w-8 text-gray-300 dark:text-gray-600" />
+                <p className="mt-3">No birthdays coming up.</p>
+              </div>
+            ) : (
+              upcomingBirthdays.map(({ contact, birthdayInfo }) => (
+                <div key={contact.id} className="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-gray-700 px-4 py-3">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{contact.name}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{birthdayInfo.nextBirthday.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
+                  </div>
+                  <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+                    {birthdayInfo.daysUntil === 0 ? 'Today' : `${birthdayInfo.daysUntil} day${birthdayInfo.daysUntil === 1 ? '' : 's'}`}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Needs Attention</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Contacts overdue for a follow-up.</p>
+            </div>
+            <Link href="/contacts/reminders" className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">View all</Link>
+          </div>
+          <div className="mt-4 space-y-3">
+            {needsAttentionContacts.length === 0 ? (
+              <div className="flex h-[140px] flex-col items-center justify-center rounded-xl bg-gray-50 dark:bg-gray-700 text-center text-sm text-gray-500 dark:text-gray-400">
+                <p className="text-base font-medium text-gray-700 dark:text-gray-200">All caught up! 🎉</p>
+                <p className="mt-2">No overdue contact reminders right now.</p>
+              </div>
+            ) : (
+              needsAttentionContacts.map(({ contact, daysSince }) => (
+                <div key={contact.id} className="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-gray-700 px-4 py-3">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{contact.name}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Reminder after {contact.remindAfterDays ?? 30} days</p>
+                  </div>
+                  <span className="rounded-full bg-rose-100 px-2.5 py-1 text-xs font-medium text-rose-700 dark:bg-rose-500/10 dark:text-rose-300">
+                    {daysSince - (contact.remindAfterDays ?? 30)} day{daysSince - (contact.remindAfterDays ?? 30) === 1 ? '' : 's'} overdue
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
       </div>
 
       {safeUpcomingBills.length > 0 ? (

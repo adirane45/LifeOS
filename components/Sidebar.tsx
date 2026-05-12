@@ -11,7 +11,11 @@ import {
   Target,
   Settings as SettingsIcon,
   X,
-  FileText
+  FileText,
+  Users,
+  AlarmClock,
+  TrendingUp,
+  Calculator
 } from 'lucide-react';
 import Button from './ui/Button';
 
@@ -25,12 +29,20 @@ const mainNav = [
   { name: 'Settings', href: '/settings', icon: SettingsIcon }
 ];
 
+const contactsNav = [
+  { name: 'All Contacts', href: '/contacts', icon: Users },
+  { name: 'Reminders', href: '/contacts/reminders', icon: AlarmClock }
+];
+
 const moneyNav = [
   { name: 'Overview', href: '/money', icon: DollarSign },
   { name: 'Accounts', href: '/money/accounts', icon: DollarSign },
   { name: 'Transactions', href: '/money/transactions', icon: DollarSign },
   { name: 'Budgets', href: '/money/budgets', icon: DollarSign },
-  { name: 'Bills', href: '/money/bills', icon: FileText }
+  { name: 'Bills', href: '/money/bills', icon: FileText },
+  { name: 'Split Expenses', href: '/money/splits', icon: Users },
+  { name: 'Investments', href: '/money/investments', icon: TrendingUp },
+  { name: 'Tax Estimation', href: '/money/tax', icon: Calculator }
 ];
 
 function SidebarContent({ closeOnNavigate, onClose }: { closeOnNavigate?: boolean; onClose?: () => void }) {
@@ -50,6 +62,23 @@ function SidebarContent({ closeOnNavigate, onClose }: { closeOnNavigate?: boolea
           </Link>
         ))}
       </nav>
+
+      <div className="mt-6">
+        <p className="px-2 text-xs font-semibold uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">Contacts</p>
+        <nav className="mt-2 space-y-1">
+          {contactsNav.map((item) => (
+            <Link
+              key={item.name}
+              href={item.href}
+              onClick={() => closeOnNavigate && onClose && onClose()}
+              className="flex items-center gap-3 rounded p-2 pl-4 text-gray-800 transition-all hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 dark:text-gray-200 dark:hover:bg-gray-700 dark:focus-visible:ring-offset-gray-800"
+            >
+              <item.icon className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+              <span className="text-sm">{item.name}</span>
+            </Link>
+          ))}
+        </nav>
+      </div>
 
       <div className="mt-6">
         <p className="px-2 text-xs font-semibold uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">Money</p>

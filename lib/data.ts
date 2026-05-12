@@ -22,7 +22,7 @@ function parseScopeKey(scopeKey: string | undefined) {
 export const getUser = cache(async () => {
   return prisma.user.findFirst({
     orderBy: { id: 'asc' },
-    select: { id: true, name: true, email: true }
+    select: { id: true, name: true, email: true, preferences: true }
   });
 });
 
@@ -148,6 +148,55 @@ export const getBills = cache(async (userId: number, take = 50, includePaid = tr
       isPaid: true,
       paidDate: true,
       notes: true,
+      createdAt: true,
+      updatedAt: true
+    }
+  });
+});
+
+export const getSplitGroups = cache(async (userId: number, take = 50) => {
+  return prisma.splitGroup.findMany({
+    where: { userId },
+    orderBy: { createdAt: 'desc' },
+    take,
+    include: {
+      shares: {
+        orderBy: { id: 'asc' }
+      }
+    }
+  });
+});
+
+export const getInvestments = cache(async (userId: number, take = 100) => {
+  return prisma.investment.findMany({
+    where: { userId },
+    orderBy: { createdAt: 'desc' },
+    take,
+    include: {
+      transactions: {
+        orderBy: { date: 'desc' }
+      }
+    }
+  });
+});
+
+export const getContacts = cache(async (userId: number, take = 500) => {
+  return prisma.contact.findMany({
+    where: { userId },
+    orderBy: { name: 'asc' },
+    take,
+    select: {
+      id: true,
+      userId: true,
+      name: true,
+      relationship: true,
+      birthday: true,
+      phone: true,
+      email: true,
+      notes: true,
+      importantDates: true,
+      lastContacted: true,
+      remindAfterDays: true,
       createdAt: true,
       updatedAt: true
     }

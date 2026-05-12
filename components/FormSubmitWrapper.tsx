@@ -26,13 +26,14 @@ export default function FormSubmitWrapper({
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
+    const form = e.currentTarget;
+    const formData = new FormData(form);
 
     startTransition(async () => {
       try {
         await action(formData);
         toast.success(`✅ ${successMessage}`);
-        e.currentTarget.reset();
+        form.reset();
         onSuccess?.();
       } catch (error) {
         const message = error instanceof Error ? error.message : errorMessage;
